@@ -64,6 +64,9 @@ abstract class Routes {
   static const BUKU_BESAR = _Paths.BUKU_BESAR;
   static const BUKU_BESAR_DETAIL = _Paths.BUKU_BESAR_DETAIL;
   static const PROFIL = _Paths.PROFIL;
+  static const KAS_DAN_BANK_DAFTAR = _Paths.KAS_DAN_BANK_DAFTAR;
+  static const NERACA_SALDO = _Paths.NERACA_SALDO;
+  static const LAPORAN_PENDAPATAN_BEBAN = _Paths.LAPORAN_PENDAPATAN_BEBAN;
 }
 
 abstract class _Paths {
@@ -129,4 +132,7 @@ abstract class _Paths {
   static const BUKU_BESAR = '/buku-besar';
   static const BUKU_BESAR_DETAIL = '/buku-besar-detail';
   static const PROFIL = '/profil';
+  static const KAS_DAN_BANK_DAFTAR = '/kas-dan-bank-daftar';
+  static const NERACA_SALDO = '/neraca-saldo';
+  static const LAPORAN_PENDAPATAN_BEBAN = '/laporan-pendapatan-beban';
 }

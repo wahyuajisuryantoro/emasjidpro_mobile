@@ -6,6 +6,7 @@ import 'package:emasjid_pro/app/services/storage_services.dart';
 import 'package:emasjid_pro/app/utils/app_colors.dart';
 import 'package:emasjid_pro/app/utils/app_responsive.dart';
 import 'package:emasjid_pro/app/utils/app_text.dart';
+import 'package:emasjid_pro/app/utils/app_currency.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -19,7 +20,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart' as share_plus;
 
-class JurnalUmumController extends GetxController {
+class LaporanPendapatanBebanController extends GetxController {
   final StorageService _storageService = Get.find<StorageService>();
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
@@ -27,19 +28,26 @@ class JurnalUmumController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxBool isError = false.obs;
   final RxString errorMessage = ''.obs;
-  final RxList journalEntries = [].obs;
-  final RxList accounts = [].obs;
-  final RxInt totalCount = 0.obs;
-  final RxNum totalDebit = RxNum(0);
-  final RxNum totalCredit = RxNum(0);
-  final RxString formattedTotalDebit = ''.obs;
-  final RxString formattedTotalCredit = ''.obs;
 
-  // Simplified filter - only month and year
+  // Laporan Pendapatan Beban data
+  final RxList pendapatanData = [].obs;
+  final RxList bebanData = [].obs;
+  final RxNum totalPendapatan = RxNum(0);
+  final RxNum totalBeban = RxNum(0);
+  final RxNum surplusDefisit = RxNum(0);
+  final RxString formattedTotalPendapatan = ''.obs;
+  final RxString formattedTotalBeban = ''.obs;
+  final RxInt totalPendapatanCount = 0.obs;
+  final RxInt totalBebanCount = 0.obs;
+  final RxString formattedSurplusDefisit = ''.obs;
+  final RxBool isSurplus = true.obs;
+  final RxString surplusDefisitText = ''.obs;
+
+  // Filter - hanya month dan year
   final RxInt selectedMonth = DateTime.now().month.obs;
   final RxInt selectedYear = DateTime.now().year.obs;
 
-  // Export filter - for range selection
+  // Export filter
   final RxInt exportFromMonth = DateTime.now().month.obs;
   final RxInt exportFromYear = DateTime.now().year.obs;
   final RxInt exportToMonth = DateTime.now().month.obs;
@@ -61,9 +69,6 @@ class JurnalUmumController extends GetxController {
     {'value': 12, 'label': 'Desember'},
   ];
 
-  final RxMap journalDetail = {}.obs;
-  final RxBool isDetailLoading = false.obs;
-
   final RxString masjidName = 'Masjid'.obs;
   final RxMap laporanData = {}.obs;
   final RxBool isDialogOpen = false.obs;
@@ -72,7 +77,7 @@ class JurnalUmumController extends GetxController {
   void onInit() {
     super.onInit();
     _loadMasjidData();
-    fetchJournalEntries();
+    fetchLaporanPendapatanBeban();
   }
 
   @override
@@ -151,17 +156,16 @@ class JurnalUmumController extends GetxController {
     laporanData['setting'] = {'pengurus': '', 'logo': null};
   }
 
-  // SAMA seperti loadLaporanData di hutang controller
   Future<void> loadLaporanData() async {
     try {
       final exportData = await fetchExportData();
-      laporanData['daftar_jurnal'] = exportData; // Simpan ke laporanData
+      laporanData['pendapatan_beban'] = exportData;
     } catch (e) {
       throw Exception('Terjadi kesalahan: $e');
     }
   }
 
-  Future<void> fetchJournalEntries() async {
+  Future<void> fetchLaporanPendapatanBeban() async {
     try {
       isLoading.value = true;
       isError.value = false;
@@ -179,7 +183,7 @@ class JurnalUmumController extends GetxController {
         'year': selectedYear.value.toString(),
       };
 
-      final uri = Uri.parse(BaseUrl.baseUrl + '/jurnal-umum').replace(
+      final uri = Uri.parse(BaseUrl.baseUrl + '/pendapatan-beban').replace(
         queryParameters: queryParams,
       );
 
@@ -190,20 +194,28 @@ class JurnalUmumController extends GetxController {
           'Content-Type': 'application/json',
         },
       );
-
+      print(response.body);
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
 
         if (data['success'] == true) {
-          journalEntries.value = data['data']['journal_entries'] ?? [];
-          accounts.value = data['data']['accounts'] ?? [];
-          totalCount.value = data['data']['total_count'] ?? 0;
-          totalDebit.value = data['data']['total_debit'] ?? 0;
-          totalCredit.value = data['data']['total_credit'] ?? 0;
-          formattedTotalDebit.value =
-              data['data']['formatted_total_debit'] ?? 'Rp 0';
-          formattedTotalCredit.value =
-              data['data']['formatted_total_credit'] ?? 'Rp 0';
+          pendapatanData.value = data['data']['pendapatan'] ?? [];
+          bebanData.value = data['data']['beban'] ?? [];
+          totalPendapatan.value = data['data']['total_pendapatan'] ?? 0;
+          totalBeban.value = data['data']['total_beban'] ?? 0;
+          surplusDefisit.value = data['data']['surplus_defisit'] ?? 0;
+          formattedTotalPendapatan.value =
+              data['data']['formatted_total_pendapatan'] ?? 'Rp 0';
+          formattedTotalBeban.value =
+              data['data']['formatted_total_beban'] ?? 'Rp 0';
+          formattedSurplusDefisit.value =
+              data['data']['formatted_surplus_defisit'] ?? 'Rp 0';
+          isSurplus.value = data['data']['is_surplus'] ?? true;
+          surplusDefisitText.value =
+              data['data']['surplus_defisit_text'] ?? 'SURPLUS';
+          totalPendapatanCount.value =
+              data['data']['total_pendapatan_count'] ?? 0;
+          totalBebanCount.value = data['data']['total_beban_count'] ?? 0;
         } else {
           isError.value = true;
           errorMessage.value = data['message'] ?? 'Terjadi kesalahan';
@@ -221,7 +233,6 @@ class JurnalUmumController extends GetxController {
   }
 
   void showExportModal() {
-    // Set default export values sama dengan filter yang sedang aktif
     exportFromMonth.value = selectedMonth.value;
     exportFromYear.value = selectedYear.value;
     exportToMonth.value = selectedMonth.value;
@@ -255,12 +266,10 @@ class JurnalUmumController extends GetxController {
               ),
               const Divider(),
               SizedBox(height: AppResponsive.h(1)),
-
-              // Checkbox untuk export semua data
               Obx(() => CheckboxListTile(
                     title: Text('Export Semua Data', style: AppText.p()),
                     subtitle: Text(
-                        'Export seluruh data jurnal tanpa filter periode',
+                        'Export seluruh data pendapatan dan beban tanpa filter periode',
                         style: AppText.small(color: Colors.grey[600])),
                     value: exportAllData.value,
                     onChanged: (value) {
@@ -268,10 +277,7 @@ class JurnalUmumController extends GetxController {
                     },
                     activeColor: AppColors.primary,
                   )),
-
               SizedBox(height: AppResponsive.h(1)),
-
-              // Filter periode tunggal - bukan range
               Obx(() => exportAllData.value
                   ? SizedBox()
                   : Column(
@@ -280,7 +286,6 @@ class JurnalUmumController extends GetxController {
                         Text('Periode Export',
                             style: AppText.pSmallBold(color: AppColors.dark)),
                         SizedBox(height: AppResponsive.h(1.5)),
-
                         Container(
                           decoration: BoxDecoration(
                             color: Colors.grey[50],
@@ -291,7 +296,6 @@ class JurnalUmumController extends GetxController {
                           padding: AppResponsive.padding(all: 2),
                           child: Row(
                             children: [
-                              // Month dropdown
                               Expanded(
                                 child: DropdownButtonFormField<int>(
                                   value: exportFromMonth.value,
@@ -327,14 +331,12 @@ class JurnalUmumController extends GetxController {
                                   onChanged: (value) {
                                     if (value != null) {
                                       exportFromMonth.value = value;
-                                      exportToMonth.value =
-                                          value; // Set sama untuk single period
+                                      exportToMonth.value = value;
                                     }
                                   },
                                 ),
                               ),
                               SizedBox(width: AppResponsive.w(2)),
-                              // Year input
                               SizedBox(
                                 width: 120,
                                 child: TextFormField(
@@ -367,8 +369,7 @@ class JurnalUmumController extends GetxController {
                                       int? year = int.tryParse(value);
                                       if (year != null) {
                                         exportFromYear.value = year;
-                                        exportToYear.value =
-                                            year; // Set sama untuk single period
+                                        exportToYear.value = year;
                                       }
                                     }
                                   },
@@ -377,9 +378,7 @@ class JurnalUmumController extends GetxController {
                             ],
                           ),
                         ),
-
                         SizedBox(height: AppResponsive.h(1)),
-                        // Info text untuk periode tunggal
                         Container(
                           padding: AppResponsive.padding(all: 1.5),
                           decoration: BoxDecoration(
@@ -402,7 +401,6 @@ class JurnalUmumController extends GetxController {
                         ),
                       ],
                     )),
-
               SizedBox(height: AppResponsive.h(3)),
               Row(
                 children: [
@@ -453,29 +451,21 @@ class JurnalUmumController extends GetxController {
     );
   }
 
-  Future<List> fetchExportData() async {
+  Future<Map<String, dynamic>> fetchExportData() async {
     try {
       String? token = _storageService.getToken();
-      if (token == null) return [];
+      if (token == null) return {};
 
       Map<String, String> queryParams = {};
 
       if (exportAllData.value) {
         queryParams['all_data'] = 'true';
       } else {
-        if (exportFromMonth.value == exportToMonth.value &&
-            exportFromYear.value == exportToYear.value) {
-          queryParams['month'] = exportFromMonth.value.toString();
-          queryParams['year'] = exportFromYear.value.toString();
-        } else {
-          queryParams['from_month'] = exportFromMonth.value.toString();
-          queryParams['from_year'] = exportFromYear.value.toString();
-          queryParams['to_month'] = exportToMonth.value.toString();
-          queryParams['to_year'] = exportToYear.value.toString();
-        }
+        queryParams['month'] = exportFromMonth.value.toString();
+        queryParams['year'] = exportFromYear.value.toString();
       }
 
-      final uri = Uri.parse(BaseUrl.baseUrl + '/jurnal-umum').replace(
+      final uri = Uri.parse(BaseUrl.baseUrl + '/pendapatan-beban').replace(
         queryParameters: queryParams,
       );
 
@@ -490,18 +480,16 @@ class JurnalUmumController extends GetxController {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['success'] == true) {
-          return data['data']['journal_entries'] ?? [];
+          return data['data'] ?? {};
         }
       }
-      return [];
+      return {};
     } catch (e) {
-      return [];
+      return {};
     }
   }
 
   // ===================== PDF GENERATION METHODS =====================
-
-  // EXACT COPY dari hutang controller generateReport()
   Future<void> generateReport() async {
     if (isLoading.value) {
       print('Report generation already in progress');
@@ -513,7 +501,7 @@ class JurnalUmumController extends GetxController {
 
       _showLoadingDialog('Memproses data...');
 
-      await loadLaporanData(); // Load data seperti hutang controller
+      await loadLaporanData();
       await _loadMasjidData();
 
       if (laporanData.isEmpty) {
@@ -589,112 +577,134 @@ class JurnalUmumController extends GetxController {
     }
   }
 
-  // EXACT COPY dari hutang controller
   List<pw.Widget> _buildFlatWidgetList(
       pw.Font ttf, pw.Font ttfBold, pw.ImageProvider? logoImage) {
-    final daftarJurnal = laporanData['daftar_jurnal'] as List<dynamic>? ?? [];
+    final pendapatanBebanData =
+        laporanData['pendapatan_beban'] as Map<String, dynamic>? ?? {};
+    final pendapatan =
+        pendapatanBebanData['pendapatan'] as List<dynamic>? ?? [];
+    final beban = pendapatanBebanData['beban'] as List<dynamic>? ?? [];
+
+    List<List<dynamic>> tableData = [];
+
+// Add pendapatan items
+    for (var item in pendapatan) {
+      tableData.add([
+        item['account_code'] ?? '',
+        item['account_name'] ?? '',
+        _formatCurrency(item['total_value'])
+      ]);
+    }
+
+// Add total pendapatan
+    tableData.add([
+      '',
+      'Total Pendapatan',
+      _formatCurrency(pendapatanBebanData['total_pendapatan'] ?? 0)
+    ]);
+
+// Add beban items
+    for (var item in beban) {
+      tableData.add([
+        item['account_code'] ?? '',
+        item['account_name'] ?? '',
+        _formatCurrency(item['total_value'])
+      ]);
+    }
+
+// Add total beban
+    tableData.add([
+      '',
+      'Total Beban',
+      _formatCurrency(pendapatanBebanData['total_beban'] ?? 0)
+    ]);
+
+// Add pendapatan bersih
+    final labaRugi = pendapatanBebanData['surplus_defisit'] ?? 0;
+    tableData.add(['', 'Surplus/Defisit', _formatCurrency(labaRugi)]);
 
     return [
       _buildKopSurat(ttfBold, ttf, masjidName.value, _getReportTitle(),
           _getReportSubtitle(), logoImage),
       pw.SizedBox(height: 25),
-      pw.Text(
-        'Data Jurnal Umum',
-        style:
-            pw.TextStyle(font: ttfBold, fontSize: 11, color: PdfColors.black),
-      ),
-      pw.SizedBox(height: 10),
-      pw.TableHelper.fromTextArray(
+      pw.Table(
         border: pw.TableBorder.all(color: PdfColors.black),
-        cellAlignment: pw.Alignment.centerLeft,
-        headerDecoration: pw.BoxDecoration(color: PdfColor.fromHex('#F8F9FA')),
-        oddRowDecoration: pw.BoxDecoration(color: PdfColor.fromHex('#FAFAFA')),
-        headerStyle: pw.TextStyle(
-          font: ttfBold,
-          fontSize: 10,
-          fontWeight: pw.FontWeight.bold,
-          color: PdfColor.fromHex('#333333'),
-        ),
-        cellStyle: pw.TextStyle(
-          font: ttf,
-          fontSize: 9,
-          color: PdfColors.black,
-        ),
-        cellPadding: pw.EdgeInsets.all(8),
-        headerAlignment: pw.Alignment.centerLeft,
-        headerAlignments: {
-          0: pw.Alignment.centerLeft,
-          1: pw.Alignment.centerLeft,
-          2: pw.Alignment.center,
-          3: pw.Alignment.center,
-          4: pw.Alignment.center,
-          5: pw.Alignment.center,
-        },
-        cellAlignments: {
-          0: pw.Alignment.centerLeft,
-          1: pw.Alignment.centerLeft,
-          2: pw.Alignment.centerRight,
-          3: pw.Alignment.centerLeft,
-          4: pw.Alignment.centerRight,
-          5: pw.Alignment.centerRight,
-        },
         columnWidths: {
-          0: pw.FlexColumnWidth(1.2),
-          1: pw.FlexColumnWidth(2.5),
-          2: pw.FlexColumnWidth(0.8),
-          3: pw.FlexColumnWidth(2.5),
-          4: pw.FlexColumnWidth(1.5),
-          5: pw.FlexColumnWidth(1.5),
+          0: pw.FlexColumnWidth(1),
+          1: pw.FlexColumnWidth(3),
+          2: pw.FlexColumnWidth(2),
         },
-        headers: [
-          'Tanggal',
-          'Deskripsi',
-          'Kode',
-          'Nama Akun',
-          'Debit',
-          'Kredit'
+        children: [
+          // Header row
+          pw.TableRow(
+            decoration: pw.BoxDecoration(color: PdfColor.fromHex('#D6DBDF')),
+            children: [
+              pw.Container(
+                padding: pw.EdgeInsets.all(6),
+                child: pw.Text('Kode Akun',
+                    style: pw.TextStyle(font: ttfBold, fontSize: 10),
+                    textAlign: pw.TextAlign.center),
+              ),
+              pw.Container(
+                padding: pw.EdgeInsets.all(6),
+                child: pw.Text('Keterangan',
+                    style: pw.TextStyle(font: ttfBold, fontSize: 10),
+                    textAlign: pw.TextAlign.center),
+              ),
+              pw.Container(
+                padding: pw.EdgeInsets.all(6),
+                child: pw.Text('Nilai',
+                    style: pw.TextStyle(font: ttfBold, fontSize: 10),
+                    textAlign: pw.TextAlign.center),
+              ),
+            ],
+          ),
+          // Data rows
+          ...tableData.map((row) {
+            bool isTotal =
+                row[1].contains('Total') || row[1] == 'Surplus/Defisit';
+
+            return pw.TableRow(
+              decoration: isTotal
+                  ? pw.BoxDecoration(color: PdfColor.fromHex('#FFEB3B'))
+                  : pw.BoxDecoration(color: PdfColors.white),
+              children: [
+                pw.Container(
+                  padding: pw.EdgeInsets.all(4),
+                  child: pw.Text(
+                    row[0],
+                    style: pw.TextStyle(
+                      font: isTotal ? ttfBold : ttf,
+                      fontSize: 9,
+                    ),
+                    textAlign: pw.TextAlign.center,
+                  ),
+                ),
+                pw.Container(
+                  padding: pw.EdgeInsets.all(4),
+                  child: pw.Text(
+                    row[1],
+                    style: pw.TextStyle(
+                      font: isTotal ? ttfBold : ttf,
+                      fontSize: 9,
+                    ),
+                  ),
+                ),
+                pw.Container(
+                  padding: pw.EdgeInsets.all(4),
+                  child: pw.Text(
+                    row[2],
+                    style: pw.TextStyle(
+                      font: isTotal ? ttfBold : ttf,
+                      fontSize: 9,
+                    ),
+                    textAlign: pw.TextAlign.right,
+                  ),
+                ),
+              ],
+            );
+          }).toList(),
         ],
-        data: daftarJurnal
-            .expand<Map<String, dynamic>>((journal) {
-              if (journal['entries'] == null || journal['entries'].isEmpty) {
-                return <Map<String, dynamic>>[];
-              }
-
-              final entries = journal['entries'] as List;
-              String description =
-                  entries.isNotEmpty ? (entries[0]['description'] ?? '') : '';
-              String formattedDate = journal['formatted_date'] ?? '';
-
-              return entries
-                  .asMap()
-                  .entries
-                  .map<Map<String, dynamic>>((entryWithIndex) {
-                int i = entryWithIndex.key;
-                var entry = entryWithIndex.value;
-
-                return {
-                  'tanggal': i == 0 ? formattedDate : '',
-                  'deskripsi': i == 0 ? description : '',
-                  'kode': entry['account']?.toString() ?? '',
-                  'nama_akun': entry['account_name']?.toString() ?? '',
-                  'debit': entry['status'] == 'debit'
-                      ? _formatCurrency(entry['value'])
-                      : '',
-                  'kredit': entry['status'] == 'credit'
-                      ? _formatCurrency(entry['value'])
-                      : '',
-                };
-              });
-            })
-            .map<List<dynamic>>((item) => [
-                  item['tanggal'] ?? '',
-                  item['deskripsi'] ?? '',
-                  item['kode'] ?? '',
-                  item['nama_akun'] ?? '',
-                  item['debit'] ?? '',
-                  item['kredit'] ?? '',
-                ])
-            .toList(),
       ),
     ];
   }
@@ -837,7 +847,7 @@ class JurnalUmumController extends GetxController {
   }
 
   String _getReportTitle() {
-    return 'LAPORAN JURNAL UMUM';
+    return 'LAPORAN PENDAPATAN DAN BEBAN';
   }
 
   String _getReportSubtitle() {
@@ -846,20 +856,13 @@ class JurnalUmumController extends GetxController {
     } else {
       final fromMonthName = monthOptions
           .firstWhere((m) => m['value'] == exportFromMonth.value)['label'];
-      final toMonthName = monthOptions
-          .firstWhere((m) => m['value'] == exportToMonth.value)['label'];
-      if (exportFromMonth.value == exportToMonth.value &&
-          exportFromYear.value == exportToYear.value) {
-        return '${fromMonthName} ${exportFromYear.value}';
-      } else {
-        return '${fromMonthName} ${exportFromYear.value} - ${toMonthName} ${exportToYear.value}';
-      }
+      return '${fromMonthName} ${exportFromYear.value}';
     }
   }
 
   String _generateFileName() {
     final dateStr = DateFormat('ddMMyyyy').format(DateTime.now());
-    return 'Laporan_JurnalUmum_$dateStr.pdf';
+    return 'Laporan_PendapatanBeban_$dateStr.pdf';
   }
 
   Future<String> _savePDFToAppDirectory(
@@ -951,7 +954,8 @@ class JurnalUmumController extends GetxController {
   Future<void> _sharePDF(String filePath) async {
     try {
       final share_plus.XFile file = share_plus.XFile(filePath);
-      String shareText = 'Laporan Jurnal Umum - ${_getReportSubtitle()}';
+      String shareText =
+          'Laporan Pendapatan dan Beban - ${_getReportSubtitle()}';
 
       await share_plus.Share.shareXFiles([file],
           text: shareText, subject: shareText);
@@ -1064,7 +1068,8 @@ class JurnalUmumController extends GetxController {
                     style: AppText.h6(color: AppColors.dark),
                     textAlign: TextAlign.center),
                 SizedBox(height: AppResponsive.h(1)),
-                Text('Laporan jurnal umum telah berhasil diekspor ke PDF',
+                Text(
+                    'Laporan pendapatan dan beban telah berhasil diekspor ke PDF',
                     style:
                         AppText.pSmall(color: AppColors.dark.withOpacity(0.7)),
                     textAlign: TextAlign.center),
@@ -1195,37 +1200,6 @@ class JurnalUmumController extends GetxController {
         backgroundColor: AppColors.danger,
         colorText: AppColors.white,
         snackPosition: SnackPosition.TOP);
-  }
-
-  Future<void> fetchJournalDetail(String code) async {
-    try {
-      isDetailLoading.value = true;
-
-      String? token = _storageService.getToken();
-      if (token == null) {
-        Get.snackbar('Error', 'Token tidak tersedia');
-        return;
-      }
-
-      final response = await http.get(
-        Uri.parse('${BaseUrl.baseUrl}/jurnal-umum/$code'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['success'] == true) {
-          journalDetail.value = data['data'] ?? {};
-        }
-      }
-    } catch (e) {
-      Get.snackbar('Error', 'Terjadi kesalahan: $e');
-    } finally {
-      isDetailLoading.value = false;
-    }
   }
 
   String getMonthName(int month) {

@@ -5,6 +5,7 @@ import 'package:emasjid_pro/app/widgets/custom_navbar_bottom.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:emasjid_pro/app/routes/app_pages.dart';
+import 'package:remixicon/remixicon.dart';
 import '../controllers/laporan_controller.dart';
 
 class LaporanView extends GetView<LaporanController> {
@@ -34,22 +35,39 @@ class LaporanView extends GetView<LaporanController> {
             _buildReportCard(
               title: 'Jurnal Umum',
               description: 'Catatan kronologis transaksi keuangan masjid',
-              icon: Icons.book,
+              icon: Remix.file_paper_line,
               color: AppColors.primary,
               onTap: () {
                 Get.toNamed(Routes.JURNAL_UMUM);
               },
             ),
+             _buildReportCard(
+              title: 'Pendapatan dan Pengeluaran',
+              description: 'Laporan seluruh akun pendapatan dan pengeluaran',
+              icon: Remix.line_chart_line,
+              color: AppColors.warning,
+              onTap: () {
+                Get.toNamed(Routes.LAPORAN_PENDAPATAN_BEBAN);
+              },
+            ),
             _buildReportCard(
               title: 'Buku Besar',
               description: 'Rekapitulasi jurnal berdasarkan akun',
-              icon: Icons.account_balance_wallet,
+              icon: Remix.booklet_line,
               color: AppColors.info,
               onTap: () {
                 Get.toNamed(Routes.BUKU_BESAR);
               },
             ),
-           
+            _buildReportCard(
+              title: 'Neraca Saldo',
+              description: 'Laporan saldo seluruh akun',
+              icon: Remix.scales_line,
+              color: AppColors.secondary,
+              onTap: () {
+                Get.toNamed(Routes.NERACA_SALDO);
+              },
+            ),
           ],
         ),
       ),

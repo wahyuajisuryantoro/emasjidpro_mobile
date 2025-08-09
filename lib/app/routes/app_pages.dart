@@ -68,10 +68,16 @@ import '../modules/kas_dan_bank/kas_dan_bank_tarik/bindings/kas_dan_bank_tarik_b
 import '../modules/kas_dan_bank/kas_dan_bank_tarik/views/kas_dan_bank_tarik_view.dart';
 import '../modules/kas_dan_bank/kas_dan_bank_transfer/bindings/kas_dan_bank_transfer_binding.dart';
 import '../modules/kas_dan_bank/kas_dan_bank_transfer/views/kas_dan_bank_transfer_view.dart';
+import '../modules/kas_dan_bank_daftar/bindings/kas_dan_bank_daftar_binding.dart';
+import '../modules/kas_dan_bank_daftar/views/kas_dan_bank_daftar_view.dart';
 import '../modules/laporan/bindings/laporan_binding.dart';
 import '../modules/laporan/views/laporan_view.dart';
+import '../modules/laporan_pendapatan_beban/bindings/laporan_pendapatan_beban_binding.dart';
+import '../modules/laporan_pendapatan_beban/views/laporan_pendapatan_beban_view.dart';
 import '../modules/login/bindings/login_binding.dart';
 import '../modules/login/views/login_view.dart';
+import '../modules/neraca_saldo/bindings/neraca_saldo_binding.dart';
+import '../modules/neraca_saldo/views/neraca_saldo_view.dart';
 import '../modules/notifikasi/bindings/notifikasi_binding.dart';
 import '../modules/notifikasi/views/notifikasi_view.dart';
 import '../modules/pendapatan/pendapatan_dashboard/bindings/pendapatan_binding.dart';
@@ -102,10 +108,10 @@ import '../modules/piutang/piutang_tambah/bindings/piutang_tambah_binding.dart';
 import '../modules/piutang/piutang_tambah/views/piutang_tambah_view.dart';
 import '../modules/piutang/piutang_tambah_cicilan/bindings/piutang_tambah_cicilan_binding.dart';
 import '../modules/piutang/piutang_tambah_cicilan/views/piutang_tambah_cicilan_view.dart';
-import '../modules/setting/profil/bindings/profil_binding.dart';
-import '../modules/setting/profil/views/profil_view.dart';
 import '../modules/register/bindings/register_binding.dart';
 import '../modules/register/views/register_view.dart';
+import '../modules/setting/profil/bindings/profil_binding.dart';
+import '../modules/setting/profil/views/profil_view.dart';
 import '../modules/setting/profile_detail_akun/bindings/profile_detail_akun_binding.dart';
 import '../modules/setting/profile_detail_akun/views/profile_detail_akun_view.dart';
 import '../modules/setting/profile_masjid_saya/bindings/profile_masjid_saya_binding.dart';
@@ -400,6 +406,21 @@ class AppPages {
       name: _Paths.PROFIL,
       page: () => const ProfilView(),
       binding: ProfilBinding(),
+    ),
+    GetPage(
+      name: _Paths.KAS_DAN_BANK_DAFTAR,
+      page: () => const KasDanBankDaftarView(),
+      binding: KasDanBankDaftarBinding(),
+    ),
+    GetPage(
+      name: _Paths.NERACA_SALDO,
+      page: () => const NeracaSaldoView(),
+      binding: NeracaSaldoBinding(),
+    ),
+    GetPage(
+      name: _Paths.LAPORAN_PENDAPATAN_BEBAN,
+      page: () => const LaporanPendapatanBebanView(),
+      binding: LaporanPendapatanBebanBinding(),
     ),
   ];
 }

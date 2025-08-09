@@ -19,7 +19,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart' as share_plus;
 
-class JurnalUmumController extends GetxController {
+class NeracaSaldoController extends GetxController {
   final StorageService _storageService = Get.find<StorageService>();
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
@@ -27,19 +27,28 @@ class JurnalUmumController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxBool isError = false.obs;
   final RxString errorMessage = ''.obs;
-  final RxList journalEntries = [].obs;
-  final RxList accounts = [].obs;
-  final RxInt totalCount = 0.obs;
-  final RxNum totalDebit = RxNum(0);
-  final RxNum totalCredit = RxNum(0);
-  final RxString formattedTotalDebit = ''.obs;
-  final RxString formattedTotalCredit = ''.obs;
 
-  // Simplified filter - only month and year
+  // Neraca Saldo data
+  final RxList neracaLeft = [].obs;
+  final RxList neracaRight = [].obs;
+  final RxNum totalLeft = RxNum(0);
+  final RxNum totalRight = RxNum(0);
+  final RxString formattedTotalLeft = ''.obs;
+  final RxString formattedTotalRight = ''.obs;
+  final RxNum selisih = RxNum(0);
+  final RxString formattedSelisih = ''.obs;
+  final RxBool neracaBalanced = false.obs;
+  final RxInt totalAccountsLeft = 0.obs;
+  final RxInt totalAccountsRight = 0.obs;
+  final RxList aktivaLancar = [].obs;
+  final RxList aktivaTetap = [].obs;
+  final RxList kewajiban = [].obs;
+  final RxList saldo = [].obs;
+  // Filter - hanya month dan year (tidak ada range untuk neraca saldo)
   final RxInt selectedMonth = DateTime.now().month.obs;
   final RxInt selectedYear = DateTime.now().year.obs;
 
-  // Export filter - for range selection
+  // Export filter
   final RxInt exportFromMonth = DateTime.now().month.obs;
   final RxInt exportFromYear = DateTime.now().year.obs;
   final RxInt exportToMonth = DateTime.now().month.obs;
@@ -61,9 +70,6 @@ class JurnalUmumController extends GetxController {
     {'value': 12, 'label': 'Desember'},
   ];
 
-  final RxMap journalDetail = {}.obs;
-  final RxBool isDetailLoading = false.obs;
-
   final RxString masjidName = 'Masjid'.obs;
   final RxMap laporanData = {}.obs;
   final RxBool isDialogOpen = false.obs;
@@ -72,7 +78,7 @@ class JurnalUmumController extends GetxController {
   void onInit() {
     super.onInit();
     _loadMasjidData();
-    fetchJournalEntries();
+    fetchNeracaSaldo();
   }
 
   @override
@@ -151,17 +157,16 @@ class JurnalUmumController extends GetxController {
     laporanData['setting'] = {'pengurus': '', 'logo': null};
   }
 
-  // SAMA seperti loadLaporanData di hutang controller
   Future<void> loadLaporanData() async {
     try {
       final exportData = await fetchExportData();
-      laporanData['daftar_jurnal'] = exportData; // Simpan ke laporanData
+      laporanData['neraca_saldo'] = exportData;
     } catch (e) {
       throw Exception('Terjadi kesalahan: $e');
     }
   }
 
-  Future<void> fetchJournalEntries() async {
+  Future<void> fetchNeracaSaldo() async {
     try {
       isLoading.value = true;
       isError.value = false;
@@ -179,7 +184,7 @@ class JurnalUmumController extends GetxController {
         'year': selectedYear.value.toString(),
       };
 
-      final uri = Uri.parse(BaseUrl.baseUrl + '/jurnal-umum').replace(
+      final uri = Uri.parse(BaseUrl.baseUrl + '/neraca-saldo').replace(
         queryParameters: queryParams,
       );
 
@@ -190,20 +195,25 @@ class JurnalUmumController extends GetxController {
           'Content-Type': 'application/json',
         },
       );
-
+      
+      print(response.body);
+      
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
 
         if (data['success'] == true) {
-          journalEntries.value = data['data']['journal_entries'] ?? [];
-          accounts.value = data['data']['accounts'] ?? [];
-          totalCount.value = data['data']['total_count'] ?? 0;
-          totalDebit.value = data['data']['total_debit'] ?? 0;
-          totalCredit.value = data['data']['total_credit'] ?? 0;
-          formattedTotalDebit.value =
-              data['data']['formatted_total_debit'] ?? 'Rp 0';
-          formattedTotalCredit.value =
-              data['data']['formatted_total_credit'] ?? 'Rp 0';
+          totalLeft.value = data['data']['total_left'] ?? 0;
+          totalRight.value = data['data']['total_right'] ?? 0;
+          formattedTotalLeft.value =
+              data['data']['formatted_total_left'] ?? 'Rp 0';
+          formattedTotalRight.value =
+              data['data']['formatted_total_right'] ?? 'Rp 0';
+          totalAccountsLeft.value = data['data']['total_accounts_left'] ?? 0;
+          totalAccountsRight.value = data['data']['total_accounts_right'] ?? 0;
+          aktivaLancar.value = data['data']['aktiva_lancar'] ?? [];
+          aktivaTetap.value = data['data']['aktiva_tetap'] ?? [];
+          kewajiban.value = data['data']['kewajiban'] ?? [];
+          saldo.value = data['data']['saldo'] ?? [];
         } else {
           isError.value = true;
           errorMessage.value = data['message'] ?? 'Terjadi kesalahan';
@@ -260,7 +270,7 @@ class JurnalUmumController extends GetxController {
               Obx(() => CheckboxListTile(
                     title: Text('Export Semua Data', style: AppText.p()),
                     subtitle: Text(
-                        'Export seluruh data jurnal tanpa filter periode',
+                        'Export seluruh data neraca saldo tanpa filter periode',
                         style: AppText.small(color: Colors.grey[600])),
                     value: exportAllData.value,
                     onChanged: (value) {
@@ -271,7 +281,7 @@ class JurnalUmumController extends GetxController {
 
               SizedBox(height: AppResponsive.h(1)),
 
-              // Filter periode tunggal - bukan range
+              // Filter periode tunggal
               Obx(() => exportAllData.value
                   ? SizedBox()
                   : Column(
@@ -327,8 +337,7 @@ class JurnalUmumController extends GetxController {
                                   onChanged: (value) {
                                     if (value != null) {
                                       exportFromMonth.value = value;
-                                      exportToMonth.value =
-                                          value; // Set sama untuk single period
+                                      exportToMonth.value = value;
                                     }
                                   },
                                 ),
@@ -367,8 +376,7 @@ class JurnalUmumController extends GetxController {
                                       int? year = int.tryParse(value);
                                       if (year != null) {
                                         exportFromYear.value = year;
-                                        exportToYear.value =
-                                            year; // Set sama untuk single period
+                                        exportToYear.value = year;
                                       }
                                     }
                                   },
@@ -453,29 +461,21 @@ class JurnalUmumController extends GetxController {
     );
   }
 
-  Future<List> fetchExportData() async {
+  Future<Map<String, dynamic>> fetchExportData() async {
     try {
       String? token = _storageService.getToken();
-      if (token == null) return [];
+      if (token == null) return {};
 
       Map<String, String> queryParams = {};
 
       if (exportAllData.value) {
         queryParams['all_data'] = 'true';
       } else {
-        if (exportFromMonth.value == exportToMonth.value &&
-            exportFromYear.value == exportToYear.value) {
-          queryParams['month'] = exportFromMonth.value.toString();
-          queryParams['year'] = exportFromYear.value.toString();
-        } else {
-          queryParams['from_month'] = exportFromMonth.value.toString();
-          queryParams['from_year'] = exportFromYear.value.toString();
-          queryParams['to_month'] = exportToMonth.value.toString();
-          queryParams['to_year'] = exportToYear.value.toString();
-        }
+        queryParams['month'] = exportFromMonth.value.toString();
+        queryParams['year'] = exportFromYear.value.toString();
       }
 
-      final uri = Uri.parse(BaseUrl.baseUrl + '/jurnal-umum').replace(
+      final uri = Uri.parse(BaseUrl.baseUrl + '/neraca-saldo').replace(
         queryParameters: queryParams,
       );
 
@@ -490,18 +490,16 @@ class JurnalUmumController extends GetxController {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['success'] == true) {
-          return data['data']['journal_entries'] ?? [];
+          return data['data'] ?? {};
         }
       }
-      return [];
+      return {};
     } catch (e) {
-      return [];
+      return {};
     }
   }
 
   // ===================== PDF GENERATION METHODS =====================
-
-  // EXACT COPY dari hutang controller generateReport()
   Future<void> generateReport() async {
     if (isLoading.value) {
       print('Report generation already in progress');
@@ -513,7 +511,7 @@ class JurnalUmumController extends GetxController {
 
       _showLoadingDialog('Memproses data...');
 
-      await loadLaporanData(); // Load data seperti hutang controller
+      await loadLaporanData();
       await _loadMasjidData();
 
       if (laporanData.isEmpty) {
@@ -589,116 +587,188 @@ class JurnalUmumController extends GetxController {
     }
   }
 
-  // EXACT COPY dari hutang controller
   List<pw.Widget> _buildFlatWidgetList(
       pw.Font ttf, pw.Font ttfBold, pw.ImageProvider? logoImage) {
-    final daftarJurnal = laporanData['daftar_jurnal'] as List<dynamic>? ?? [];
+    final neracaSaldoData =
+        laporanData['neraca_saldo'] as Map<String, dynamic>? ?? {};
+    final aktivaLancar =
+        neracaSaldoData['aktiva_lancar'] as List<dynamic>? ?? [];
+    final aktivaTetap = neracaSaldoData['aktiva_tetap'] as List<dynamic>? ?? [];
+    final kewajiban = neracaSaldoData['kewajiban'] as List<dynamic>? ?? [];
+    final saldo = neracaSaldoData['saldo'] as List<dynamic>? ?? [];
+
+    List<List<dynamic>> tableData = [];
+
+    // Add section header for Aktiva Lancar
+    if (aktivaLancar.isNotEmpty) {
+      tableData.add(['', 'AKTIVA LANCAR', '', '']);
+      for (var item in aktivaLancar) {
+        tableData.add([
+          item['account_code'] ?? '',
+          item['account_name'] ?? '',
+          _formatCurrency(item['saldo_akhir']),
+          ''
+        ]);
+      }
+    }
+
+    // Add section header for Aktiva Tetap
+    if (aktivaTetap.isNotEmpty) {
+      tableData.add(['', 'AKTIVA TETAP', '', '']);
+      for (var item in aktivaTetap) {
+        tableData.add([
+          item['account_code'] ?? '',
+          item['account_name'] ?? '',
+          _formatCurrency(item['saldo_akhir']),
+          ''
+        ]);
+      }
+    }
+
+    // Add section header for Kewajiban
+    if (kewajiban.isNotEmpty) {
+      tableData.add(['', 'KEWAJIBAN', '', '']);
+      for (var item in kewajiban) {
+        tableData.add([
+          item['account_code'] ?? '',
+          item['account_name'] ?? '',
+          '',
+          _formatCurrency(item['saldo_akhir'])
+        ]);
+      }
+    }
+
+    // Add section header for Saldo
+    if (saldo.isNotEmpty) {
+      tableData.add(['', 'SALDO', '', '']);
+      for (var item in saldo) {
+        tableData.add([
+          item['account_code'] ?? '',
+          item['account_name'] ?? '',
+          '',
+          _formatCurrency(item['saldo_akhir'])
+        ]);
+      }
+    }
+
+    // Add totals
+    tableData.add([
+      '',
+      'TOTAL',
+      _formatCurrency(neracaSaldoData['total_left'] ?? 0),
+      _formatCurrency(neracaSaldoData['total_right'] ?? 0)
+    ]);
 
     return [
       _buildKopSurat(ttfBold, ttf, masjidName.value, _getReportTitle(),
           _getReportSubtitle(), logoImage),
       pw.SizedBox(height: 25),
-      pw.Text(
-        'Data Jurnal Umum',
-        style:
-            pw.TextStyle(font: ttfBold, fontSize: 11, color: PdfColors.black),
-      ),
-      pw.SizedBox(height: 10),
-      pw.TableHelper.fromTextArray(
+      pw.Table(
         border: pw.TableBorder.all(color: PdfColors.black),
-        cellAlignment: pw.Alignment.centerLeft,
-        headerDecoration: pw.BoxDecoration(color: PdfColor.fromHex('#F8F9FA')),
-        oddRowDecoration: pw.BoxDecoration(color: PdfColor.fromHex('#FAFAFA')),
-        headerStyle: pw.TextStyle(
-          font: ttfBold,
-          fontSize: 10,
-          fontWeight: pw.FontWeight.bold,
-          color: PdfColor.fromHex('#333333'),
-        ),
-        cellStyle: pw.TextStyle(
-          font: ttf,
-          fontSize: 9,
-          color: PdfColors.black,
-        ),
-        cellPadding: pw.EdgeInsets.all(8),
-        headerAlignment: pw.Alignment.centerLeft,
-        headerAlignments: {
-          0: pw.Alignment.centerLeft,
-          1: pw.Alignment.centerLeft,
-          2: pw.Alignment.center,
-          3: pw.Alignment.center,
-          4: pw.Alignment.center,
-          5: pw.Alignment.center,
-        },
-        cellAlignments: {
-          0: pw.Alignment.centerLeft,
-          1: pw.Alignment.centerLeft,
-          2: pw.Alignment.centerRight,
-          3: pw.Alignment.centerLeft,
-          4: pw.Alignment.centerRight,
-          5: pw.Alignment.centerRight,
-        },
         columnWidths: {
-          0: pw.FlexColumnWidth(1.2),
+          0: pw.FlexColumnWidth(1),
           1: pw.FlexColumnWidth(2.5),
-          2: pw.FlexColumnWidth(0.8),
-          3: pw.FlexColumnWidth(2.5),
-          4: pw.FlexColumnWidth(1.5),
-          5: pw.FlexColumnWidth(1.5),
+          2: pw.FlexColumnWidth(1.5),
+          3: pw.FlexColumnWidth(1.5),
         },
-        headers: [
-          'Tanggal',
-          'Deskripsi',
-          'Kode',
-          'Nama Akun',
-          'Debit',
-          'Kredit'
+        children: [
+          // Header row
+          pw.TableRow(
+            decoration: pw.BoxDecoration(color: PdfColor.fromHex('#D6DBDF')),
+            children: [
+              pw.Container(
+                padding: pw.EdgeInsets.all(6),
+                child: pw.Text('No. Akun',
+                    style: pw.TextStyle(font: ttfBold, fontSize: 10),
+                    textAlign: pw.TextAlign.center),
+              ),
+              pw.Container(
+                padding: pw.EdgeInsets.all(6),
+                child: pw.Text('Nama Akun',
+                    style: pw.TextStyle(font: ttfBold, fontSize: 10),
+                    textAlign: pw.TextAlign.center),
+              ),
+              pw.Container(
+                padding: pw.EdgeInsets.all(6),
+                child: pw.Text('Debit (Rp)',
+                    style: pw.TextStyle(font: ttfBold, fontSize: 10),
+                    textAlign: pw.TextAlign.center),
+              ),
+              pw.Container(
+                padding: pw.EdgeInsets.all(6),
+                child: pw.Text('Kredit (Rp)',
+                    style: pw.TextStyle(font: ttfBold, fontSize: 10),
+                    textAlign: pw.TextAlign.center),
+              ),
+            ],
+          ),
+          // Data rows
+          ...tableData.map((row) {
+            bool isTotal = row[1] == 'TOTAL';
+            bool isSectionHeader = row[1] == 'AKTIVA LANCAR' ||
+                row[1] == 'AKTIVA TETAP' ||
+                row[1] == 'KEWAJIBAN' ||
+                row[1] == 'SALDO';
+
+            return pw.TableRow(
+              decoration: isTotal
+                  ? pw.BoxDecoration(color: PdfColor.fromHex('#FFEB3B'))
+                  : isSectionHeader
+                      ? pw.BoxDecoration(color: PdfColor.fromHex('#E8F5E8'))
+                      : null,
+              children: [
+                pw.Container(
+                  padding: pw.EdgeInsets.all(4),
+                  child: pw.Text(
+                    row[0],
+                    style: pw.TextStyle(
+                      font: (isTotal || isSectionHeader) ? ttfBold : ttf,
+                      fontSize: 9,
+                    ),
+                    textAlign: pw.TextAlign.center,
+                  ),
+                ),
+                pw.Container(
+                  padding: pw.EdgeInsets.all(4),
+                  child: pw.Text(
+                    row[1],
+                    style: pw.TextStyle(
+                      font: (isTotal || isSectionHeader) ? ttfBold : ttf,
+                      fontSize: 9,
+                    ),
+                  ),
+                ),
+                pw.Container(
+                  padding: pw.EdgeInsets.all(4),
+                  child: pw.Text(
+                    row[2],
+                    style: pw.TextStyle(
+                      font: (isTotal || isSectionHeader) ? ttfBold : ttf,
+                      fontSize: 9,
+                    ),
+                    textAlign: pw.TextAlign.right,
+                  ),
+                ),
+                pw.Container(
+                  padding: pw.EdgeInsets.all(4),
+                  child: pw.Text(
+                    row[3],
+                    style: pw.TextStyle(
+                      font: (isTotal || isSectionHeader) ? ttfBold : ttf,
+                      fontSize: 9,
+                    ),
+                    textAlign: pw.TextAlign.right,
+                  ),
+                ),
+              ],
+            );
+          }).toList(),
         ],
-        data: daftarJurnal
-            .expand<Map<String, dynamic>>((journal) {
-              if (journal['entries'] == null || journal['entries'].isEmpty) {
-                return <Map<String, dynamic>>[];
-              }
-
-              final entries = journal['entries'] as List;
-              String description =
-                  entries.isNotEmpty ? (entries[0]['description'] ?? '') : '';
-              String formattedDate = journal['formatted_date'] ?? '';
-
-              return entries
-                  .asMap()
-                  .entries
-                  .map<Map<String, dynamic>>((entryWithIndex) {
-                int i = entryWithIndex.key;
-                var entry = entryWithIndex.value;
-
-                return {
-                  'tanggal': i == 0 ? formattedDate : '',
-                  'deskripsi': i == 0 ? description : '',
-                  'kode': entry['account']?.toString() ?? '',
-                  'nama_akun': entry['account_name']?.toString() ?? '',
-                  'debit': entry['status'] == 'debit'
-                      ? _formatCurrency(entry['value'])
-                      : '',
-                  'kredit': entry['status'] == 'credit'
-                      ? _formatCurrency(entry['value'])
-                      : '',
-                };
-              });
-            })
-            .map<List<dynamic>>((item) => [
-                  item['tanggal'] ?? '',
-                  item['deskripsi'] ?? '',
-                  item['kode'] ?? '',
-                  item['nama_akun'] ?? '',
-                  item['debit'] ?? '',
-                  item['kredit'] ?? '',
-                ])
-            .toList(),
       ),
     ];
   }
 
+  // Helper methods (sama seperti JurnalUmum)
   pw.Widget _buildKopSurat(pw.Font ttfBold, pw.Font ttf, String masjidName,
       String title, String subtitle, pw.ImageProvider? logoImage) {
     return pw.Column(
@@ -837,7 +907,7 @@ class JurnalUmumController extends GetxController {
   }
 
   String _getReportTitle() {
-    return 'LAPORAN JURNAL UMUM';
+    return 'LAPORAN NERACA SALDO';
   }
 
   String _getReportSubtitle() {
@@ -846,20 +916,13 @@ class JurnalUmumController extends GetxController {
     } else {
       final fromMonthName = monthOptions
           .firstWhere((m) => m['value'] == exportFromMonth.value)['label'];
-      final toMonthName = monthOptions
-          .firstWhere((m) => m['value'] == exportToMonth.value)['label'];
-      if (exportFromMonth.value == exportToMonth.value &&
-          exportFromYear.value == exportToYear.value) {
-        return '${fromMonthName} ${exportFromYear.value}';
-      } else {
-        return '${fromMonthName} ${exportFromYear.value} - ${toMonthName} ${exportToYear.value}';
-      }
+      return '${fromMonthName} ${exportFromYear.value}';
     }
   }
 
   String _generateFileName() {
     final dateStr = DateFormat('ddMMyyyy').format(DateTime.now());
-    return 'Laporan_JurnalUmum_$dateStr.pdf';
+    return 'Laporan_NeracaSaldo_$dateStr.pdf';
   }
 
   Future<String> _savePDFToAppDirectory(
@@ -951,7 +1014,7 @@ class JurnalUmumController extends GetxController {
   Future<void> _sharePDF(String filePath) async {
     try {
       final share_plus.XFile file = share_plus.XFile(filePath);
-      String shareText = 'Laporan Jurnal Umum - ${_getReportSubtitle()}';
+      String shareText = 'Laporan Neraca Saldo - ${_getReportSubtitle()}';
 
       await share_plus.Share.shareXFiles([file],
           text: shareText, subject: shareText);
@@ -1064,7 +1127,7 @@ class JurnalUmumController extends GetxController {
                     style: AppText.h6(color: AppColors.dark),
                     textAlign: TextAlign.center),
                 SizedBox(height: AppResponsive.h(1)),
-                Text('Laporan jurnal umum telah berhasil diekspor ke PDF',
+                Text('Laporan neraca saldo telah berhasil diekspor ke PDF',
                     style:
                         AppText.pSmall(color: AppColors.dark.withOpacity(0.7)),
                     textAlign: TextAlign.center),
@@ -1139,9 +1202,7 @@ class JurnalUmumController extends GetxController {
                             onPressed: () {
                               try {
                                 Get.back();
-                              } catch (e) {
-                                print('Error closing dialog: $e');
-                              }
+                              } catch (e) {}
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.danger,
@@ -1195,37 +1256,6 @@ class JurnalUmumController extends GetxController {
         backgroundColor: AppColors.danger,
         colorText: AppColors.white,
         snackPosition: SnackPosition.TOP);
-  }
-
-  Future<void> fetchJournalDetail(String code) async {
-    try {
-      isDetailLoading.value = true;
-
-      String? token = _storageService.getToken();
-      if (token == null) {
-        Get.snackbar('Error', 'Token tidak tersedia');
-        return;
-      }
-
-      final response = await http.get(
-        Uri.parse('${BaseUrl.baseUrl}/jurnal-umum/$code'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['success'] == true) {
-          journalDetail.value = data['data'] ?? {};
-        }
-      }
-    } catch (e) {
-      Get.snackbar('Error', 'Terjadi kesalahan: $e');
-    } finally {
-      isDetailLoading.value = false;
-    }
   }
 
   String getMonthName(int month) {

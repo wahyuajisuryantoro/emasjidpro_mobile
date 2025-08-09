@@ -31,13 +31,7 @@ class AkunKeuanganEditView extends GetView<AkunKeuanganEditController> {
           onPressed: () => Get.back(),
         ),
       ),
-      body: _buildContent(),
-      bottomNavigationBar: _buildBottomBar(),
-    );
-  }
-  
-  Widget _buildContent() {
-    return SingleChildScrollView(
+      body: SingleChildScrollView(
       padding: AppResponsive.padding(all: 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -47,7 +41,7 @@ class AkunKeuanganEditView extends GetView<AkunKeuanganEditController> {
             hint: 'Masukkan kode akun (contoh: 101)',
             controller: controller.kodeController,
             keyboardType: TextInputType.number,
-            readOnly: true, // Kode biasanya tidak diubah
+            readOnly: true,
           ),
           SizedBox(height: AppResponsive.h(3)),
           _buildTextField(
@@ -68,8 +62,61 @@ class AkunKeuanganEditView extends GetView<AkunKeuanganEditController> {
           ),
         ],
       ),
+    ),
+      bottomNavigationBar: Container(
+      padding: AppResponsive.padding(all: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: OutlinedButton(
+              onPressed: controller.deleteAccount,
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: AppColors.danger),
+                padding: AppResponsive.padding(vertical: 2),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(
+                'Hapus',
+                style: AppText.button(color: AppColors.danger),
+              ),
+            ),
+          ),
+          SizedBox(width: AppResponsive.w(3)),
+          Expanded(
+            flex: 2,
+            child: ElevatedButton(
+              onPressed: controller.updateAccount,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                padding: AppResponsive.padding(vertical: 2),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(
+                'Simpan Perubahan',
+                style: AppText.button(color: Colors.white),
+              ),
+            ),
+          ),
+        ],
+      ),
+      )
     );
   }
+  
   
   Widget _buildTextField({
     required String label,
@@ -164,60 +211,6 @@ class AkunKeuanganEditView extends GetView<AkunKeuanganEditController> {
           ),
         ),
       ],
-    );
-  }
-  
-  Widget _buildBottomBar() {
-    return Container(
-      padding: AppResponsive.padding(all: 4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: OutlinedButton(
-              onPressed: controller.deleteAccount,
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(color: AppColors.danger),
-                padding: AppResponsive.padding(vertical: 2),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: Text(
-                'Hapus',
-                style: AppText.button(color: AppColors.danger),
-              ),
-            ),
-          ),
-          SizedBox(width: AppResponsive.w(3)),
-          Expanded(
-            flex: 2,
-            child: ElevatedButton(
-              onPressed: controller.updateAccount,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding: AppResponsive.padding(vertical: 2),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: Text(
-                'Simpan Perubahan',
-                style: AppText.button(color: Colors.white),
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

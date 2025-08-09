@@ -45,71 +45,82 @@ class KasDanBankDashboardView extends GetView<KasDanBankDashboardController> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildActivityMenu(),
-                      _buildSectionHeader('Rincian Saldo'),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _buildActivityCard(
+                              icon: Remix.download_line,
+                              title: "Setor",
+                              color: AppColors.primary,
+                              onTap: () {
+                                Get.toNamed(Routes.KAS_DAN_BANK_SETOR);
+                              },
+                            ),
+                            _buildActivityCard(
+                              icon: Remix.upload_line,
+                              title: "Tarik",
+                              color: AppColors.warning,
+                              onTap: () {
+                                Get.toNamed(Routes.KAS_DAN_BANK_TARIK);
+                              },
+                            ),
+                            _buildActivityCard(
+                              icon: Remix.exchange_line,
+                              title: "Transfer",
+                              color: AppColors.info,
+                              onTap: () {
+                                Get.toNamed(Routes.KAS_DAN_BANK_TRANSFER);
+                              },
+                            ),
+                            _buildActivityCard(
+                              icon: Remix.file_chart_line,
+                              title: "Laporan",
+                              color: AppColors.danger,
+                              onTap: () {
+                                Get.toNamed(Routes.KAS_DAN_BANK_LAPORAN);
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding:
+                            AppResponsive.padding(horizontal: 4, vertical: 2),
+                        child: Text(
+                          'Rincian Saldo',
+                          style: AppText.h5(color: AppColors.dark),
+                        ),
+                      ),
                       _buildAccountsList(),
-                      _buildSectionHeader('Riwayat Mutasi'),
+                      Padding(
+                        padding:
+                            AppResponsive.padding(horizontal: 4, vertical: 2),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Riwayat Mutasi',
+                              style: AppText.h5(color: AppColors.dark),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Get.toNamed(Routes.KAS_DAN_BANK_DAFTAR);
+                              },
+                              child: Text(
+                                'Lihat Semua',
+                                style: AppText.pSmall(color: AppColors.primary),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                       _buildTransactionsList(),
                     ],
                   ),
                 ),
               ),
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: AppResponsive.padding(horizontal: 4, vertical: 2),
-      child: Text(
-        title,
-        style: AppText.h5(color: AppColors.dark),
-      ),
-    );
-  }
-
-  Widget _buildActivityMenu() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _buildActivityCard(
-            icon: Remix.download_line,
-            title: "Setor",
-           
-            color: AppColors.primary,
-            onTap: () {
-              Get.toNamed(Routes.KAS_DAN_BANK_SETOR);
-            },
-          ),
-          _buildActivityCard(
-            icon: Remix.upload_line,
-            title: "Tarik", 
-            color: AppColors.warning,
-            onTap: () {
-              Get.toNamed(Routes.KAS_DAN_BANK_TARIK);
-            },
-          ),
-          _buildActivityCard(
-            icon: Remix.exchange_line,
-            title: "Transfer",        
-            color: AppColors.info,
-            onTap: () {
-              Get.toNamed(Routes.KAS_DAN_BANK_TRANSFER);
-            },
-            
-          ),
-           _buildActivityCard(
-            icon: Remix.file_chart_line,
-            title: "Laporan",          
-            color: AppColors.danger,
-            onTap: () {
-              Get.toNamed(Routes.KAS_DAN_BANK_LAPORAN);
-            },
-            
-          ),
-        ],
       ),
     );
   }
@@ -156,7 +167,6 @@ class KasDanBankDashboardView extends GetView<KasDanBankDashboardController> {
                 style: AppText.pSmallBold(color: AppColors.dark),
                 textAlign: TextAlign.center,
               ),
-             
             ],
           ),
         ),
@@ -243,116 +253,116 @@ class KasDanBankDashboardView extends GetView<KasDanBankDashboardController> {
         ));
   }
 
- Widget _buildTransactionItem(dynamic transaction) {
-  final formatDate = DateFormat('dd MMM yyyy');
+  Widget _buildTransactionItem(dynamic transaction) {
+    final formatDate = DateFormat('dd MMM yyyy');
 
-  final String fromAccount =
-      transaction['fromAccount'].toString().toLowerCase();
-  final String toAccount = transaction['toAccount'].toString().toLowerCase();
+    final String fromAccount =
+        transaction['fromAccount'].toString().toLowerCase();
+    final String toAccount = transaction['toAccount'].toString().toLowerCase();
 
-  bool isKasIncoming = toAccount.contains('kas');
-  bool isKasOutgoing = fromAccount.contains('kas');
+    bool isKasIncoming = toAccount.contains('kas');
+    bool isKasOutgoing = fromAccount.contains('kas');
 
-  Color transactionColor;
-  IconData transactionIcon;
-  String transactionType;
+    Color transactionColor;
+    IconData transactionIcon;
+    String transactionType;
 
-  if (isKasIncoming && !isKasOutgoing) {
-    transactionColor = AppColors.success;
-    transactionIcon = Remix.arrow_down_line;
-    transactionType = "Tarik";
-  } else if (isKasOutgoing && !isKasIncoming) {
-    transactionColor = AppColors.warning;
-    transactionIcon = Remix.arrow_up_line;
-    transactionType = "Setor";
-  } else {
-    transactionColor = AppColors.info;
-    transactionIcon = Remix.exchange_line;
-    transactionType = "Transfer";
-  }
+    if (isKasIncoming && !isKasOutgoing) {
+      transactionColor = AppColors.success;
+      transactionIcon = Remix.arrow_down_line;
+      transactionType = "Tarik";
+    } else if (isKasOutgoing && !isKasIncoming) {
+      transactionColor = AppColors.warning;
+      transactionIcon = Remix.arrow_up_line;
+      transactionType = "Setor";
+    } else {
+      transactionColor = AppColors.info;
+      transactionIcon = Remix.exchange_line;
+      transactionType = "Transfer";
+    }
 
-  return Container(
-    margin: AppResponsive.margin(bottom: 2),
-    padding: AppResponsive.padding(all: 2),
-    decoration: BoxDecoration(
-      color: AppColors.white,
-      border: Border.all(color: AppColors.dark.withOpacity(0.1)),
-      borderRadius: BorderRadius.circular(8),
-    ),
-    child: Row(
-      children: [
-        Container(
-          padding: AppResponsive.padding(all: 1),
-          decoration: BoxDecoration(
-            color: transactionColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(20),
+    return Container(
+      margin: AppResponsive.margin(bottom: 2),
+      padding: AppResponsive.padding(all: 2),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        border: Border.all(color: AppColors.dark.withOpacity(0.1)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: AppResponsive.padding(all: 1),
+            decoration: BoxDecoration(
+              color: transactionColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Icon(
+              transactionIcon,
+              color: transactionColor,
+              size: 20,
+            ),
           ),
-          child: Icon(
-            transactionIcon,
-            color: transactionColor,
-            size: 20,
+          SizedBox(width: AppResponsive.w(2)),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding:
+                          AppResponsive.padding(horizontal: 1, vertical: 0.5),
+                      decoration: BoxDecoration(
+                        color: transactionColor,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        transactionType,
+                        style: AppText.small(color: AppColors.white),
+                      ),
+                    ),
+                    SizedBox(width: AppResponsive.w(1)),
+                    Expanded(
+                      child: Text(
+                        transaction['description'] ?? 'Tidak ada keterangan',
+                        style: AppText.bodyMedium(color: AppColors.dark),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: AppResponsive.h(0.5)),
+                Text(
+                  '${transaction['fromAccount']} → ${transaction['toAccount']}',
+                  style: AppText.small(color: AppColors.dark.withOpacity(0.6)),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                SizedBox(height: AppResponsive.h(1)),
+                Text(
+                  controller.formatDate(transaction['date']),
+                  style: AppText.small(color: AppColors.dark.withOpacity(0.6)),
+                ),
+              ],
+            ),
           ),
-        ),
-        SizedBox(width: AppResponsive.w(2)),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding:
-                        AppResponsive.padding(horizontal: 1, vertical: 0.5),
-                    decoration: BoxDecoration(
-                      color: transactionColor,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      transactionType,
-                      style: AppText.small(color: AppColors.white),
-                    ),
-                  ),
-                  SizedBox(width: AppResponsive.w(1)),
-                  Expanded(
-                    child: Text(
-                      transaction['description'] ?? 'Tidak ada keterangan',
-                      style: AppText.bodyMedium(color: AppColors.dark),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: AppResponsive.h(0.5)),
               Text(
-                '${transaction['fromAccount']} → ${transaction['toAccount']}',
-                style: AppText.small(color: AppColors.dark.withOpacity(0.6)),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+                controller.formatCurrency(transaction['amount']),
+                style: AppText.bodyMedium(color: transactionColor),
               ),
-               SizedBox(height: AppResponsive.h(1)),
               Text(
-                controller.formatDate(transaction['date']),
-                style: AppText.small(color: AppColors.dark.withOpacity(0.6)),
+                '#${transaction['code']}',
+                style: AppText.small(color: AppColors.dark.withOpacity(0.5)),
               ),
             ],
           ),
-        ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              controller.formatCurrency(transaction['amount']),
-              style: AppText.bodyMedium(color: transactionColor),
-            ),
-            Text(
-              '#${transaction['code']}',
-              style: AppText.small(color: AppColors.dark.withOpacity(0.5)),
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 }

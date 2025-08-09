@@ -1,14 +1,14 @@
 import 'package:emasjid_pro/app/utils/app_colors.dart';
+import 'package:emasjid_pro/app/utils/app_currency.dart';
 import 'package:emasjid_pro/app/utils/app_responsive.dart';
 import 'package:emasjid_pro/app/utils/app_text.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import 'package:remixicon/remixicon.dart';
-import '../controllers/jurnal_umum_controller.dart';
+import '../controllers/neraca_saldo_controller.dart';
 
-class JurnalUmumView extends GetView<JurnalUmumController> {
-  const JurnalUmumView({super.key});
+class NeracaSaldoView extends GetView<NeracaSaldoController> {
+  const NeracaSaldoView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +17,7 @@ class JurnalUmumView extends GetView<JurnalUmumController> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text('Jurnal Umum', style: AppText.h5(color: AppColors.dark)),
+        title: Text('Neraca Saldo', style: AppText.h5(color: AppColors.dark)),
         centerTitle: true,
         backgroundColor: AppColors.white,
         elevation: 0,
@@ -34,7 +34,7 @@ class JurnalUmumView extends GetView<JurnalUmumController> {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          await controller.fetchJournalEntries();
+          await controller.fetchNeracaSaldo();
         },
         child: Column(
           children: [
@@ -50,7 +50,7 @@ class JurnalUmumView extends GetView<JurnalUmumController> {
                             color: AppColors.primary),
                         SizedBox(height: AppResponsive.h(2)),
                         Text(
-                          'Memuat data jurnal...',
+                          'Memuat data neraca saldo...',
                           style: AppText.p(color: Colors.grey[600]),
                         ),
                       ],
@@ -80,7 +80,7 @@ class JurnalUmumView extends GetView<JurnalUmumController> {
                         ),
                         SizedBox(height: AppResponsive.h(2)),
                         ElevatedButton.icon(
-                          onPressed: () => controller.fetchJournalEntries(),
+                          onPressed: () => controller.fetchNeracaSaldo(),
                           icon:
                               const Icon(Icons.refresh, color: AppColors.white),
                           label: Text('Coba Lagi',
@@ -99,7 +99,10 @@ class JurnalUmumView extends GetView<JurnalUmumController> {
                   );
                 }
 
-                if (controller.journalEntries.isEmpty) {
+                if (controller.aktivaLancar.isEmpty &&
+                    controller.aktivaTetap.isEmpty &&
+                    controller.kewajiban.isEmpty &&
+                    controller.saldo.isEmpty) {
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -110,12 +113,12 @@ class JurnalUmumView extends GetView<JurnalUmumController> {
                             color: Colors.grey[200],
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(Icons.article_outlined,
+                          child: Icon(Icons.balance_outlined,
                               size: 48, color: Colors.grey[500]),
                         ),
                         SizedBox(height: AppResponsive.h(2)),
                         Text(
-                          'Tidak ada data jurnal yang ditemukan',
+                          'Tidak ada data neraca saldo yang ditemukan',
                           style: AppText.p(color: AppColors.dark),
                           textAlign: TextAlign.center,
                         ),
@@ -128,8 +131,7 @@ class JurnalUmumView extends GetView<JurnalUmumController> {
                     ),
                   );
                 }
-
-                return _buildJournalTable();
+                return _buildNeracaSaldoContent();
               }),
             ),
           ],
@@ -149,6 +151,14 @@ class JurnalUmumView extends GetView<JurnalUmumController> {
     return Obx(() => Container(
           decoration: BoxDecoration(
             color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                spreadRadius: 1,
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           padding: AppResponsive.padding(vertical: 2, horizontal: 3),
           child: Column(
@@ -167,16 +177,16 @@ class JurnalUmumView extends GetView<JurnalUmumController> {
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.arrow_upward,
+                              const Icon(Icons.trending_up,
                                   color: Colors.white, size: 16),
                               SizedBox(width: AppResponsive.w(1)),
-                              Text('Total Debit',
+                              Text('Total Aktiva',
                                   style: AppText.pSmall(
                                       color: Colors.white.withOpacity(0.9))),
                             ],
                           ),
                           SizedBox(height: AppResponsive.h(0.5)),
-                          Text(controller.formattedTotalDebit.value,
+                          Text(controller.formattedTotalLeft.value,
                               style: AppText.h5(color: Colors.white)),
                         ],
                       ),
@@ -187,7 +197,7 @@ class JurnalUmumView extends GetView<JurnalUmumController> {
                     child: Container(
                       padding: AppResponsive.padding(all: 2),
                       decoration: BoxDecoration(
-                        color: AppColors.primary,
+                        color: AppColors.secondary,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Column(
@@ -195,16 +205,16 @@ class JurnalUmumView extends GetView<JurnalUmumController> {
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.arrow_downward,
+                              const Icon(Icons.trending_down,
                                   color: Colors.white, size: 16),
                               SizedBox(width: AppResponsive.w(1)),
-                              Text('Total Kredit',
+                              Text('Total Pasiva',
                                   style: AppText.pSmall(
                                       color: Colors.white.withOpacity(0.9))),
                             ],
                           ),
                           SizedBox(height: AppResponsive.h(0.5)),
-                          Text(controller.formattedTotalCredit.value,
+                          Text(controller.formattedTotalRight.value,
                               style: AppText.h5(color: Colors.white)),
                         ],
                       ),
@@ -219,6 +229,39 @@ class JurnalUmumView extends GetView<JurnalUmumController> {
                     padding:
                         AppResponsive.padding(horizontal: 1.5, vertical: 0.5),
                     decoration: BoxDecoration(
+                      color: controller.neracaBalanced.value
+                          ? AppColors.success.withOpacity(0.1)
+                          : AppColors.warning.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                            controller.neracaBalanced.value
+                                ? Icons.check_circle_outline
+                                : Icons.warning_outlined,
+                            size: 14,
+                            color: controller.neracaBalanced.value
+                                ? AppColors.success
+                                : AppColors.warning),
+                        SizedBox(width: AppResponsive.w(1)),
+                        Text(
+                          controller.neracaBalanced.value
+                              ? 'Neraca Seimbang'
+                              : 'Selisih: ${controller.formattedSelisih.value}',
+                          style: AppText.small(
+                              color: controller.neracaBalanced.value
+                                  ? AppColors.success
+                                  : AppColors.warning),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(width: AppResponsive.w(2)),
+                  Container(
+                    padding:
+                        AppResponsive.padding(horizontal: 1.5, vertical: 0.5),
+                    decoration: BoxDecoration(
                       color: AppColors.dark.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(30),
                     ),
@@ -228,7 +271,7 @@ class JurnalUmumView extends GetView<JurnalUmumController> {
                             size: 14, color: AppColors.dark.withOpacity(0.6)),
                         SizedBox(width: AppResponsive.w(1)),
                         Text(
-                          'Menampilkan ${controller.totalCount} transaksi',
+                          'Total: ${controller.totalAccountsLeft.value + controller.totalAccountsRight.value} akun',
                           style: AppText.small(
                               color: AppColors.dark.withOpacity(0.7)),
                         ),
@@ -242,127 +285,186 @@ class JurnalUmumView extends GetView<JurnalUmumController> {
         ));
   }
 
-  Widget _buildJournalTable() {
-    return SingleChildScrollView(
-      padding: AppResponsive.padding(horizontal: 2, vertical: 1),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Daftar Jurnal', style: AppText.h6()),
-          SizedBox(height: AppResponsive.h(1.5)),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
+  Widget _buildNeracaSaldoContent() {
+  return SingleChildScrollView(
+    padding: AppResponsive.padding(horizontal: 2, vertical: 1),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Neraca Saldo - ${controller.getCurrentPeriodText()}',
+            style: AppText.h6()),
+        SizedBox(height: AppResponsive.h(1.5)),
+        
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
                   color: Colors.grey.withOpacity(0.1),
                   spreadRadius: 1,
                   blurRadius: 4,
-                  offset: const Offset(0, 2),
+                  offset: const Offset(0, 2))
+            ],
+          ),
+          child: Column(
+            children: [
+              // AKTIVA Header
+              Container(
+                width: double.infinity,
+                padding: AppResponsive.padding(all: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(8),
+                    topRight: Radius.circular(8),
+                  ),
                 ),
+                child: Text('Aktiva', style: AppText.pSmallBold(color: AppColors.primary)),
+              ),
+              
+              // Aktiva Lancar Section
+              _buildSubCategorySection('Aktiva Lancar', controller.aktivaLancar),
+              
+              // Aktiva Tetap Section  
+              _buildSubCategorySection('Aktiva Tetap', controller.aktivaTetap),
+              
+              // Total Aktiva
+              _buildTotalRow('Jumlah Aktiva', controller.totalLeft.value, AppColors.primary),
+              
+              SizedBox(height: AppResponsive.h(1)),
+              
+              // PASIVA - Kewajiban Section
+              _buildSubCategorySection('Kewajiban', controller.kewajiban),
+              
+              // Modal Section
+              _buildSubCategorySection('Modal', controller.saldo),
+              
+              // Total Kewajiban dan Modal
+              Container(
+                padding: AppResponsive.padding(horizontal: 2, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.warning.withOpacity(0.1),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(8),
+                    bottomRight: Radius.circular(8),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text('Jumlah Kewajiban dan Modal',
+                          style: AppText.pSmallBold(color: AppColors.dark))),
+                    Text(controller.formattedTotalRight.value,
+                        style: AppText.pSmallBold(color: AppColors.dark)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: AppResponsive.h(8)),
+      ],
+    ),
+  );
+}
+
+Widget _buildSubCategorySection(String title, RxList items) {
+  // Hitung total untuk sub kategori ini
+  num subTotal = items.fold(0, (sum, item) => sum + (item['saldo_akhir'] ?? 0));
+  
+  return Column(
+    children: [
+      // Sub kategori header
+      Container(
+        width: double.infinity,
+        padding: AppResponsive.padding(horizontal: 2, vertical: 1),
+        decoration: BoxDecoration(color: Colors.grey[100]),
+        child: Text(title, style: AppText.pSmallBold(color: AppColors.dark)),
+      ),
+      
+      // Items dalam sub kategori atau pesan "tidak ada data"
+      if (items.isEmpty)
+        Container(
+          padding: AppResponsive.padding(horizontal: 2, vertical: 2),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: Colors.grey[200]!, width: 0.5))
+          ),
+          child: Row(
+            children: [
+              SizedBox(width: AppResponsive.w(2)),
+              Expanded(
+                child: Text(
+                  'Tidak ada data',
+                  style: AppText.pSmall(color: Colors.grey[500]),
+                  textAlign: TextAlign.center,
+                )
+              ),
+            ],
+          ),
+        )
+      else
+        ...items.map((item) {
+          return Container(
+            padding: AppResponsive.padding(horizontal: 2, vertical: 1.5),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: Colors.grey[200]!, width: 0.5))
+            ),
+            child: Row(
+              children: [
+                SizedBox(width: AppResponsive.w(2)),
+                Expanded(
+                  child: Text(item['account_name'] ?? '', style: AppText.pSmall())
+                ),
+                Text(AppCurrency.formatNumber(item['saldo_akhir']), 
+                     style: AppText.pSmall(color: AppColors.dark)),
               ],
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: DataTable(
-                headingRowColor: WidgetStateProperty.all(Colors.grey[100]),
-                dataRowMinHeight: 60,
-                dataRowMaxHeight: 80,
-                columnSpacing: 8,
-                dividerThickness: 0.5,
-                headingTextStyle: AppText.pSmallBold(color: AppColors.dark),
-                columns: [
-                  DataColumn(
-                    label: Text('Tanggal', style: AppText.pSmallBold()),
-                  ),
-                  DataColumn(
-                    label: Text('Deskripsi', style: AppText.pSmallBold()),
-                  ),
-                  DataColumn(
-                    label: Text('Debit', style: AppText.pSmallBold()),
-                    numeric: true,
-                  ),
-                  DataColumn(
-                    label: Text('Kredit', style: AppText.pSmallBold()),
-                    numeric: true,
-                  ),
-                ],
-                rows: _buildJournalRows(),
-              ),
+          );
+        }).toList(),
+      
+      // Sub total
+      Container(
+        padding: AppResponsive.padding(horizontal: 2, vertical: 1.5),
+        decoration: BoxDecoration(
+          color: Colors.grey[50],
+          border: Border(bottom: BorderSide(color: Colors.grey[300]!, width: 1))
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text('Jumlah $title', 
+                         style: AppText.pSmallBold(color: AppColors.dark))
             ),
-          ),
-          SizedBox(height: AppResponsive.h(8)),
-        ],
+            Text(AppCurrency.formatNumber(subTotal), 
+                 style: AppText.pSmallBold(color: AppColors.dark)),
+          ],
+        ),
       ),
-    );
-  }
+      
+      SizedBox(height: AppResponsive.h(1)),
+    ],
+  );
+}
 
-  List<DataRow> _buildJournalRows() {
-    List<DataRow> rows = [];
-
-    for (var journal in controller.journalEntries) {
-      var debitEntry = journal['entries'].firstWhere(
-          (entry) => entry['status'] == 'debit',
-          orElse: () => null);
-      var creditEntry = journal['entries'].firstWhere(
-          (entry) => entry['status'] == 'credit',
-          orElse: () => null);
-
-      if (debitEntry != null && creditEntry != null) {
-        rows.add(
-          DataRow(
-            color: rows.length % 2 == 0
-                ? WidgetStateProperty.all(Colors.white)
-                : WidgetStateProperty.all(Colors.grey[50]),
-            cells: [
-              DataCell(Text(
-                journal['formatted_date'] ?? '',
-                style: AppText.small(color: Colors.grey[600]),
-              )),
-              DataCell(Text(
-                debitEntry['account_name'] ?? '',
-                style: AppText.pSmall(),
-              )),
-              DataCell(Text(
-                debitEntry['formatted_debit'] ?? '',
-                style: AppText.pSmall(color: AppColors.primary),
-                textAlign: TextAlign.right,
-              )),
-              DataCell(Text('', style: AppText.pSmall())),
-            ],
-          ),
-        );
-
-        rows.add(
-          DataRow(
-            color: rows.length % 2 == 0
-                ? WidgetStateProperty.all(Colors.white)
-                : WidgetStateProperty.all(Colors.grey[50]),
-            cells: [
-              DataCell(Text(
-                journal['formatted_date'] ?? '',
-                style: AppText.small(color: Colors.grey[600]),
-              )),
-              DataCell(Text(
-                debitEntry['description'] ?? '',
-                style: AppText.pSmall(),
-              )),
-              DataCell(Text('', style: AppText.pSmall())),
-              DataCell(Text(
-                creditEntry['formatted_credit'] ?? '',
-                style: AppText.pSmall(color: AppColors.danger),
-                textAlign: TextAlign.right,
-              )),
-            ],
-          ),
-        );
-      }
-    }
-
-    return rows;
-  }
-
+Widget _buildTotalRow(String title, num value, Color color) {
+  return Container(
+    padding: AppResponsive.padding(horizontal: 2, vertical: 2),
+    decoration: BoxDecoration(
+      color: color.withOpacity(0.1),
+      border: Border(bottom: BorderSide(color: color, width: 2))
+    ),
+    child: Row(
+      children: [
+        Expanded(
+          child: Text(title, style: AppText.pSmallBold(color: color))
+        ),
+        Text(AppCurrency.formatNumber(value), 
+             style: AppText.pSmallBold(color: color)),
+      ],
+    ),
+  );
+}
   void _showMonthYearPicker(BuildContext context) {
     Get.bottomSheet(
       Container(
@@ -469,7 +571,7 @@ class JurnalUmumView extends GetView<JurnalUmumController> {
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      controller.fetchJournalEntries();
+                      controller.fetchNeracaSaldo();
                       Get.back();
                     },
                     icon: const Icon(Icons.check, color: Colors.white),

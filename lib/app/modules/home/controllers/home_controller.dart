@@ -119,7 +119,7 @@ class HomeController extends GetxController {
       Get.snackbar(
         'Error',
         'Gagal memuat data profile dari server',
-        snackPosition: SnackPosition.BOTTOM,
+        snackPosition: SnackPosition.TOP,
         backgroundColor: AppColors.danger,
         colorText: Colors.white,
       );
@@ -132,7 +132,7 @@ class HomeController extends GetxController {
     Get.snackbar(
       'Session Expired',
       'Silakan login ulang',
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.TOP,
       backgroundColor: AppColors.warning,
       colorText: Colors.white,
     );
@@ -144,7 +144,7 @@ class HomeController extends GetxController {
     Get.snackbar(
       'Session Expired',
       'Silakan login ulang',
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.TOP,
       backgroundColor: AppColors.danger,
       colorText: Colors.white,
     );
