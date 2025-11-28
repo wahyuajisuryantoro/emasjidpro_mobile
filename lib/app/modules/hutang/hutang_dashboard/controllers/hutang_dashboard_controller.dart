@@ -152,7 +152,7 @@ class HutangDashboardController extends GetxController {
     } catch (e) {
       Get.snackbar(
         'Error',
-        'Failed to load dashboard data: $e',
+        'Terjadi Kesalahan',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -161,6 +161,10 @@ class HutangDashboardController extends GetxController {
     } finally {
       isLoading(false);
     }
+  }
+
+  Future<void> refreshData() async {
+    await fetchDashboardData();
   }
 
   String _ensureString(dynamic value) {

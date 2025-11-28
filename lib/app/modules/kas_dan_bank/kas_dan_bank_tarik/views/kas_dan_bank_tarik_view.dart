@@ -256,7 +256,6 @@ class KasDanBankTarikView extends GetView<KasDanBankTarikController> {
             keyboardType: TextInputType.number,
             inputFormatters: [
               FilteringTextInputFormatter.digitsOnly,
-              controller.currencyFormatter,
             ],
             decoration: InputDecoration(
               hintText: '0',

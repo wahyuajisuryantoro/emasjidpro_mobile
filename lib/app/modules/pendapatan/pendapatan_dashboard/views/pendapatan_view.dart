@@ -26,36 +26,32 @@ class PendapatanView extends GetView<PendapatanController> {
           style: AppText.h5(color: AppColors.dark),
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Icon(
-              Remix.refresh_line,
-              color: AppColors.dark,
-            ),
-            onPressed: () {
-              controller.fetchDashboardData();
-            },
-          ),
-        ],
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildPeriodSummaryCards(),
-              const SizedBox(height: 20),
-              _buildActivityMenu(),
-              const SizedBox(height: 20),
-              _buildIncomeCategoriesSummary(),
-              const SizedBox(height: 20),
-              _buildTransactionHistory(),
-            ],
+        return RefreshIndicator(
+          onRefresh: () async {
+            await controller.fetchDashboardData();
+          },
+          color: AppColors.success,
+          child: SingleChildScrollView(
+            physics: AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildPeriodSummaryCards(),
+                const SizedBox(height: 20),
+                _buildActivityMenu(),
+                const SizedBox(height: 20),
+                _buildIncomeCategoriesSummary(),
+                const SizedBox(height: 20),
+                _buildTransactionHistory(),
+              ],
+            ),
           ),
         );
       }),
@@ -88,8 +84,7 @@ class PendapatanView extends GetView<PendapatanController> {
                     ),
                     Text(
                       'Tahunan',
-                      style: AppText.pSmall(
-                          color: AppColors.white),
+                      style: AppText.pSmall(color: AppColors.white),
                     ),
                   ],
                 ),
@@ -108,7 +103,6 @@ class PendapatanView extends GetView<PendapatanController> {
             decoration: BoxDecoration(
               color: AppColors.info,
               borderRadius: BorderRadius.circular(15),
-              
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,7 +111,6 @@ class PendapatanView extends GetView<PendapatanController> {
                   children: [
                     Container(
                       padding: AppResponsive.padding(all: 1),
-                     
                       child: Icon(
                         Remix.calendar_check_line,
                         color: AppColors.white,
@@ -126,8 +119,7 @@ class PendapatanView extends GetView<PendapatanController> {
                     ),
                     Text(
                       'Bulanan',
-                      style: AppText.pSmall(
-                          color: AppColors.white),
+                      style: AppText.pSmall(color: AppColors.white),
                     ),
                   ],
                 ),
@@ -150,15 +142,21 @@ class PendapatanView extends GetView<PendapatanController> {
         _buildActivityCard(
           icon: Remix.add_circle_fill,
           title: "Transaksi",
-          onTap: () {
-            Get.toNamed(Routes.PENDAPATAN_TRANSAKSI);
+          onTap: () async {
+            final result = await Get.toNamed(Routes.PENDAPATAN_TRANSAKSI);
+            if (result == 'refresh') {
+              controller.refreshData();
+            }
           },
         ),
         _buildActivityCard(
-          icon: Remix.history_fill,
+          icon: Remix.history_line,
           title: "Riwayat",
-          onTap: () {
-            Get.toNamed(Routes.PENDAPATAN_RIWAYAT);
+          onTap: () async {
+            final result = await Get.toNamed(Routes.PENDAPATAN_RIWAYAT);
+            if (result == 'refresh') {
+              controller.refreshData();
+            }
           },
         ),
         _buildActivityCard(
@@ -379,7 +377,7 @@ class PendapatanView extends GetView<PendapatanController> {
     required bool isIncome,
   }) {
     return Row(
-      children: [   
+      children: [
         SizedBox(width: AppResponsive.w(3)),
         Expanded(
           child: Column(

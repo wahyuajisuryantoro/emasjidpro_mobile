@@ -1,3 +1,4 @@
+import 'package:emasjid_pro/app/helpers/input_currency_formatter.dart';
 import 'package:emasjid_pro/app/routes/app_pages.dart';
 import 'package:emasjid_pro/app/utils/app_colors.dart';
 import 'package:emasjid_pro/app/utils/app_responsive.dart';
@@ -114,7 +115,9 @@ class AsetJualView extends GetView<AsetJualController> {
                 hint: 'Masukkan harga jual',
                 controller: controller.sellValueController,
                 keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                inputFormatters: [
+                  IndonesiaCurrencyFormatter()
+                ],
                 prefixText: 'Rp ',
               ),
               SizedBox(height: AppResponsive.h(3)),

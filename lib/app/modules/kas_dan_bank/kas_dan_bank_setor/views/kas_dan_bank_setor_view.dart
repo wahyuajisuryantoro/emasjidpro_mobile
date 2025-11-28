@@ -238,7 +238,6 @@ class KasDanBankSetorView extends GetView<KasDanBankSetorController> {
             keyboardType: TextInputType.number,
             inputFormatters: [
               FilteringTextInputFormatter.digitsOnly,
-              controller.currencyFormatter,
             ],
             decoration: InputDecoration(
               hintText: '0',

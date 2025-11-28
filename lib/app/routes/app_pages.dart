@@ -422,5 +422,10 @@ class AppPages {
       page: () => const LaporanPendapatanBebanView(),
       binding: LaporanPendapatanBebanBinding(),
     ),
+    GetPage(
+      name: _Paths.TESTT,
+      page: () => const TesttView(),
+      binding: TesttBinding(),
+    ),
   ];
 }

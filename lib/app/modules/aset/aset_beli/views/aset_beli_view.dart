@@ -1,3 +1,4 @@
+import 'package:emasjid_pro/app/helpers/input_currency_formatter.dart';
 import 'package:emasjid_pro/app/utils/app_colors.dart';
 import 'package:emasjid_pro/app/utils/app_responsive.dart';
 import 'package:emasjid_pro/app/utils/app_text.dart';
@@ -77,16 +78,18 @@ class AsetBeliView extends GetView<AsetBeliController> {
               ),
               SizedBox(height: AppResponsive.h(3)),
 
-              // Kategori Dropdown
-              _buildCategoryDropdown(),
+              // PERBAIKAN: Dropdown Akun Aset (Aktiva Tetap)
+              _buildAssetAccountDropdown(),
               SizedBox(height: AppResponsive.h(3)),
-              // Akun Pembayaran
+              _buildCategoryDropdown(), // Tambah ini
+              SizedBox(height: AppResponsive.h(3)),
+              // PERBAIKAN: Dropdown Akun Pembayaran (Kas/Bank)
               _buildPaymentAccountDropdown(),
               SizedBox(height: AppResponsive.h(3)),
 
               // Brand
               _buildTextField(
-                label: 'Brand/Merek',
+                label: 'Brand/Merek (Opsional)',
                 hint: 'Masukkan brand/merek aset',
                 controller: controller.brandController,
               ),
@@ -94,7 +97,7 @@ class AsetBeliView extends GetView<AsetBeliController> {
 
               // Vendor/Penjual
               _buildTextField(
-                label: 'Vendor/Penjual',
+                label: 'Vendor/Penjual (Opsional)',
                 hint: 'Masukkan nama vendor/penjual',
                 controller: controller.vendorController,
               ),
@@ -102,7 +105,7 @@ class AsetBeliView extends GetView<AsetBeliController> {
 
               // Lokasi
               _buildTextField(
-                label: 'Lokasi',
+                label: 'Lokasi (Opsional)',
                 hint: 'Masukkan lokasi aset',
                 controller: controller.locationController,
               ),
@@ -111,7 +114,7 @@ class AsetBeliView extends GetView<AsetBeliController> {
               // Deskripsi
               _buildTextField(
                 label: 'Deskripsi',
-                hint: 'Masukkan deskripsi aset (opsional)',
+                hint: 'Masukkan deskripsi aset',
                 controller: controller.descriptionController,
                 maxLines: 3,
               ),
@@ -131,11 +134,23 @@ class AsetBeliView extends GetView<AsetBeliController> {
                 hint: 'Masukkan harga pembelian',
                 controller: controller.purchasePriceController,
                 keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                inputFormatters: [IndonesiaCurrencyFormatter()],
                 prefixText: 'Rp ',
               ),
               SizedBox(height: AppResponsive.h(3)),
-              _buildPictureField(),
+
+              // PERBAIKAN: Masa Ekonomis
+              _buildTextField(
+                label: 'Masa Ekonomis (Tahun)',
+                hint: 'Masukkan masa ekonomis dalam tahun',
+                controller: controller.economicLifeController,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              ),
+              SizedBox(height: AppResponsive.h(3)),
+
+              // PERBAIKAN: Attachment (bukan hanya picture)
+              _buildAttachmentField(),
               SizedBox(height: AppResponsive.h(3)),
             ],
           ),
@@ -202,6 +217,11 @@ class AsetBeliView extends GetView<AsetBeliController> {
           'Kategori Aset',
           style: AppText.bodyMedium(color: AppColors.dark),
         ),
+        SizedBox(height: AppResponsive.h(0.5)),
+        Text(
+          'Pilih kategori untuk klasifikasi aset',
+          style: AppText.small(color: AppColors.dark.withOpacity(0.6)),
+        ),
         SizedBox(height: AppResponsive.h(1)),
         Obx(() => DropdownButtonFormField<Map<String, dynamic>>(
               value: controller.selectedCategory.value,
@@ -238,6 +258,56 @@ class AsetBeliView extends GetView<AsetBeliController> {
     );
   }
 
+  Widget _buildAssetAccountDropdown() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Akun Aset',
+          style: AppText.bodyMedium(color: AppColors.dark),
+        ),
+        SizedBox(height: AppResponsive.h(0.5)),
+        Text(
+          'Pilih jenis akun aset (Tanah, Bangunan, Kendaraan, Peralatan, Perlengkapan)',
+          style: AppText.small(color: AppColors.dark.withOpacity(0.6)),
+        ),
+        SizedBox(height: AppResponsive.h(1)),
+        Obx(() => DropdownButtonFormField<Map<String, dynamic>>(
+              value: controller.selectedAssetAccount.value,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                contentPadding: AppResponsive.padding(all: 2),
+              ),
+              hint: controller.isLoadingAssetAccounts.value
+                  ? Row(
+                      children: [
+                        SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        SizedBox(width: 8),
+                        Text('Memuat akun aset...'),
+                      ],
+                    )
+                  : Text('Pilih akun aset'),
+              items: controller.assetAccounts.map((account) {
+                return DropdownMenuItem(
+                  value: account,
+                  child: Text(account['name']),
+                );
+              }).toList(),
+              onChanged: (value) {
+                controller.selectedAssetAccount.value = value;
+              },
+            )),
+      ],
+    );
+  }
+
+  // PERBAIKAN: Dropdown untuk Akun Pembayaran (Kas/Bank 1xx)
   Widget _buildPaymentAccountDropdown() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -245,6 +315,11 @@ class AsetBeliView extends GetView<AsetBeliController> {
         Text(
           'Akun Pembayaran',
           style: AppText.bodyMedium(color: AppColors.dark),
+        ),
+        SizedBox(height: AppResponsive.h(0.5)),
+        Text(
+          'Pilih akun kas atau bank yang digunakan untuk membayar',
+          style: AppText.small(color: AppColors.dark.withOpacity(0.6)),
         ),
         SizedBox(height: AppResponsive.h(1)),
         Obx(() => DropdownButtonFormField<Map<String, dynamic>>(
@@ -255,7 +330,7 @@ class AsetBeliView extends GetView<AsetBeliController> {
                 ),
                 contentPadding: AppResponsive.padding(all: 2),
               ),
-              hint: controller.isLoadingAccounts.value
+              hint: controller.isLoadingPaymentAccounts.value
                   ? Row(
                       children: [
                         SizedBox(
@@ -264,22 +339,14 @@ class AsetBeliView extends GetView<AsetBeliController> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         ),
                         SizedBox(width: 8),
-                        Text('Memuat akun...'),
+                        Text('Memuat akun pembayaran...'),
                       ],
                     )
                   : Text('Pilih akun pembayaran'),
               items: controller.paymentAccounts.map((account) {
                 return DropdownMenuItem(
                   value: account,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        account['name'],
-                        style: AppText.bodyMedium(color: AppColors.dark),
-                      ),
-                    ],
-                  ),
+                  child: Text(account['name']),
                 );
               }).toList(),
               onChanged: (value) {
@@ -389,25 +456,30 @@ class AsetBeliView extends GetView<AsetBeliController> {
     );
   }
 
-  Widget _buildPictureField() {
+  Widget _buildAttachmentField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Foto Aset (Opsional)',
+          'Lampiran (Opsional)',
           style: AppText.bodyMedium(color: AppColors.dark),
         ),
+        SizedBox(height: AppResponsive.h(0.5)),
+        Text(
+          'Foto aset, dokumen pembelian, atau file lainnya',
+          style: AppText.small(color: AppColors.dark.withOpacity(0.6)),
+        ),
         SizedBox(height: AppResponsive.h(1)),
-        Obx(() => controller.hasPicture.value
-            ? _buildPicturePreview()
-            : _buildPicturePicker()),
+        Obx(() => controller.hasAttachment.value
+            ? _buildAttachmentPreview()
+            : _buildAttachmentPicker()),
       ],
     );
   }
 
-  Widget _buildPicturePicker() {
+  Widget _buildAttachmentPicker() {
     return InkWell(
-      onTap: controller.pickPicture,
+      onTap: controller.pickAttachment,
       child: Container(
         width: double.infinity,
         padding: AppResponsive.padding(vertical: 3),
@@ -422,18 +494,18 @@ class AsetBeliView extends GetView<AsetBeliController> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Remix.camera_line,
+              Remix.attachment_line,
               color: AppColors.primary,
               size: 32,
             ),
             SizedBox(height: AppResponsive.h(1)),
             Text(
-              'Pilih foto aset',
+              'Pilih file lampiran',
               style: AppText.pSmall(color: AppColors.primary),
             ),
             SizedBox(height: AppResponsive.h(0.5)),
             Text(
-              'JPG, PNG (max. 5MB)',
+              'JPG, PNG, PDF, DOC (max. 5MB)',
               style: AppText.small(color: AppColors.dark.withOpacity(0.5)),
             ),
           ],
@@ -442,7 +514,7 @@ class AsetBeliView extends GetView<AsetBeliController> {
     );
   }
 
-  Widget _buildPicturePreview() {
+  Widget _buildAttachmentPreview() {
     return Container(
       padding: AppResponsive.padding(all: 2),
       decoration: BoxDecoration(
@@ -459,7 +531,7 @@ class AsetBeliView extends GetView<AsetBeliController> {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
-              Remix.image_fill,
+              _getFileIcon(controller.attachmentName.value),
               color: AppColors.primary,
             ),
           ),
@@ -469,21 +541,21 @@ class AsetBeliView extends GetView<AsetBeliController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  controller.pictureName.value,
+                  controller.attachmentName.value,
                   style: AppText.pSmall(color: AppColors.dark),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 SizedBox(height: AppResponsive.h(0.5)),
                 Text(
-                  controller.pictureSize.value,
+                  controller.attachmentSize.value,
                   style: AppText.small(color: AppColors.dark.withOpacity(0.5)),
                 ),
               ],
             ),
           ),
           IconButton(
-            onPressed: controller.removePicture,
+            onPressed: controller.removeAttachment,
             icon: Icon(
               Remix.close_circle_fill,
               color: AppColors.danger,
@@ -492,5 +564,22 @@ class AsetBeliView extends GetView<AsetBeliController> {
         ],
       ),
     );
+  }
+
+  IconData _getFileIcon(String fileName) {
+    String extension = fileName.toLowerCase().split('.').last;
+    switch (extension) {
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+        return Remix.image_fill;
+      case 'pdf':
+        return Remix.file_text_fill;
+      case 'doc':
+      case 'docx':
+        return Remix.file_word_fill;
+      default:
+        return Remix.file_fill;
+    }
   }
 }

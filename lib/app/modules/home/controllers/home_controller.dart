@@ -12,24 +12,52 @@ import 'package:http/http.dart' as http;
 class HomeController extends GetxController {
   final StorageService _storageService = Get.find<StorageService>();
 
+  // Profile data
   final RxString userName = "".obs;
   final RxString name = "".obs;
   final RxString picture = "".obs;
   final RxString email = "".obs;
+  final RxBool isLoadingProfile = false.obs;
+
+  // Masjid data
   final RxString masjidName = "".obs;
   final RxString masjidAlamat = "".obs;
+
+  // Notification
   final RxInt unreadNotificationCount = 0.obs;
-  final RxBool isLoadingProfile = false.obs;
+
+  // Home financial data - sesuai response backend
+  final RxString pendapatanBulanIni = "Rp 0".obs;
+  final RxString pendapatanBulanLalu = "Rp 0".obs;
+  final RxString pengeluaranBulanIni = "Rp 0".obs;
+  final RxString pengeluaranBulanLalu = "Rp 0".obs;
+  final RxBool isLoadingHomeData = false.obs;
+
+  // Tab control
+  final RxInt selectedTabIndex = 0.obs;
 
   @override
   void onInit() {
     super.onInit();
     loadProfileData();
-    fetchMasjidName();
+    fetchMasjidData();
+    fetchUnreadNotificationCount();
+    getHomeData();
+  }
+
+  void refreshNotificationCount() {
     fetchUnreadNotificationCount();
   }
 
-  Future<void> fetchMasjidName() async {
+  void initResponsive(BuildContext context) {
+    AppResponsive().init(context);
+  }
+
+  void changeTab(int index) {
+    selectedTabIndex.value = index;
+  }
+
+  Future<void> fetchMasjidData() async {
     try {
       final token = _storageService.getToken();
       if (token == null) return;
@@ -41,7 +69,7 @@ class HomeController extends GetxController {
           'Accept': 'application/json',
         },
       );
-      print(response.body);
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['status'] == 'success' && data['masjid'] != null) {
@@ -50,7 +78,7 @@ class HomeController extends GetxController {
         }
       }
     } catch (e) {
-      print('Error: $e');
+      print('Error fetching masjid data: $e');
     }
   }
 
@@ -84,7 +112,6 @@ class HomeController extends GetxController {
       final token = _storageService.getToken();
 
       if (token == null) {
-        print('No token found');
         _handleNoToken();
         return;
       }
@@ -101,7 +128,6 @@ class HomeController extends GetxController {
         final data = json.decode(response.body);
         if (data['success'] && data['data'] != null) {
           final profileData = data['data'];
-
           name.value = profileData['name'] ?? '';
           email.value = profileData['email'] ?? '';
           picture.value = profileData['picture'] ?? '';
@@ -115,7 +141,6 @@ class HomeController extends GetxController {
       }
     } catch (e) {
       print('Error loading profile: $e');
-
       Get.snackbar(
         'Error',
         'Gagal memuat data profile dari server',
@@ -125,6 +150,60 @@ class HomeController extends GetxController {
       );
     } finally {
       isLoadingProfile.value = false;
+    }
+  }
+
+  Future<void> getHomeData() async {
+    try {
+      isLoadingHomeData.value = true;
+      final token = _storageService.getToken();
+
+      if (token == null) {
+        _handleNoToken();
+        return;
+      }
+
+      final response = await http.get(
+        Uri.parse('${BaseUrl.baseUrl}/home-data'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success'] && data['data'] != null) {
+          final homeData = data['data'];
+
+          // Update data sesuai response backend
+          pendapatanBulanIni.value =
+              homeData['pendapatan']['bulan_ini'] ?? 'Rp 0';
+          pendapatanBulanLalu.value =
+              homeData['pendapatan']['bulan_lalu'] ?? 'Rp 0';
+          pengeluaranBulanIni.value =
+              homeData['pengeluaran']['bulan_ini'] ?? 'Rp 0';
+          pengeluaranBulanLalu.value =
+              homeData['pengeluaran']['bulan_lalu'] ?? 'Rp 0';
+        } else {
+          throw Exception(data['message'] ?? 'Gagal memuat data home');
+        }
+      } else if (response.statusCode == 401) {
+        _handleUnauthorized();
+      } else {
+        throw Exception('Server error: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error loading home data: $e');
+      Get.snackbar(
+        'Error',
+        'Gagal memuat data finansial',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: AppColors.danger,
+        colorText: Colors.white,
+      );
+    } finally {
+      isLoadingHomeData.value = false;
     }
   }
 
@@ -149,64 +228,5 @@ class HomeController extends GetxController {
       colorText: Colors.white,
     );
     Get.offAllNamed(Routes.LOGIN);
-  }
-
-  void refreshNotificationCount() {
-    fetchUnreadNotificationCount();
-  }
-
-  final pendapatan = 'Rp 25.750.000'.obs;
-  final pengeluaran = 'Rp 12.345.000'.obs;
-  final saldo = 'Rp 13.405.000'.obs;
-
-  final periode = 'Maret 2025'.obs;
-
-  final selectedTabIndex = 0.obs;
-
-  final currencyRate = 'Rp 405.800.900'.obs;
-
-  void initResponsive(BuildContext context) {
-    AppResponsive().init(context);
-  }
-
-  void updateFinancialData({String? newPendapatan, String? newPengeluaran}) {
-    if (newPendapatan != null) {
-      pendapatan.value = newPendapatan;
-    }
-
-    if (newPengeluaran != null) {
-      pengeluaran.value = newPengeluaran;
-    }
-
-    calculateSaldo();
-  }
-
-  void calculateSaldo() {
-    final pendapatanValue =
-        int.parse(pendapatan.value.replaceAll('Rp ', '').replaceAll('.', ''));
-
-    final pengeluaranValue =
-        int.parse(pengeluaran.value.replaceAll('Rp ', '').replaceAll('.', ''));
-
-    final saldoValue = pendapatanValue - pengeluaranValue;
-
-    saldo.value =
-        'Rp ${saldoValue.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}';
-  }
-
-  void changePeriode(String newPeriode) {
-    periode.value = newPeriode;
-  }
-
-  void changeTab(int index) {
-    selectedTabIndex.value = index;
-  }
-
-  void fetchFinancialData() {
-    Future.delayed(Duration(seconds: 1), () {
-      pendapatan.value = 'Rp 25.750.000';
-      pengeluaran.value = 'Rp 12.345.000';
-      calculateSaldo();
-    });
   }
 }

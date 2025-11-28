@@ -2,7 +2,6 @@ import 'package:emasjid_pro/app/models/AkunKeuanganModel.dart';
 import 'package:emasjid_pro/app/utils/app_colors.dart';
 import 'package:emasjid_pro/app/utils/app_responsive.dart';
 import 'package:emasjid_pro/app/utils/app_text.dart';
-import 'package:emasjid_pro/app/widgets/custom_navbar_bottom.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:remixicon/remixicon.dart';
@@ -31,39 +30,61 @@ class AkunDashboardView extends GetView<AkunDashboardController> {
           onPressed: () => Get.back(),
         ),
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          controller.loadAccounts();
-        },
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Padding(
-            padding: AppResponsive.padding(all: 4),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildAccountSection(
-                  title: 'Aktiva Lancar',
-                  accounts: controller.aktivaLancar,
-                 
-                ),
-                SizedBox(height: AppResponsive.h(3)),
-                _buildAccountSection(
-                  title: 'Aktiva Tetap',
-                  accounts: controller.aktivaTetap,
-                  
-                ),
-                SizedBox(height: AppResponsive.h(3)),
-                _buildAccountSection(
-                  title: 'Kewajiban',
-                  accounts: controller.kewajiban,
-                
-                ),
-              ],
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return Center(
+            child: CircularProgressIndicator(
+              color: AppColors.primary,
+            ),
+          );
+        }
+
+        return RefreshIndicator(
+          onRefresh: () async {
+            controller.loadAccounts();
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Padding(
+              padding: AppResponsive.padding(all: 4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildAccountSection(
+                    title: 'Aktiva Lancar',
+                    accounts: controller.aktivaLancar,
+                  ),
+                  SizedBox(height: AppResponsive.h(3)),
+                  _buildAccountSection(
+                    title: 'Aktiva Tetap',
+                    accounts: controller.aktivaTetap,
+                  ),
+                  SizedBox(height: AppResponsive.h(3)),
+                  _buildAccountSection(
+                    title: 'Kewajiban',
+                    accounts: controller.kewajiban,
+                  ),
+                  SizedBox(height: AppResponsive.h(3)),
+                  _buildAccountSection(
+                    title: 'Saldo',
+                    accounts: controller.saldo,
+                  ),
+                  SizedBox(height: AppResponsive.h(3)),
+                  _buildAccountSection(
+                    title: 'Pendapatan',
+                    accounts: controller.pendapatan,
+                  ),
+                  SizedBox(height: AppResponsive.h(3)),
+                  _buildAccountSection(
+                    title: 'Beban',
+                    accounts: controller.beban,
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      }),
       floatingActionButton: FloatingActionButton(
         onPressed: controller.navigateToAddAccount,
         backgroundColor: AppColors.primary,
@@ -88,7 +109,7 @@ class AkunDashboardView extends GetView<AkunDashboardController> {
           Container(
             padding: AppResponsive.padding(horizontal: 3, vertical: 2),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary,
               borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
             ),
             child: Row(
@@ -96,16 +117,30 @@ class AkunDashboardView extends GetView<AkunDashboardController> {
               children: [
                 Text(
                   title,
-                  style: AppText.h5(color: AppColors.primary),
+                  style: AppText.h5(color: AppColors.white),
                 ),
               ],
             ),
           ),
-          Obx(() => Column(
-                children: accounts.map((account) {
-                  return _buildAccountItem(account);
-                }).toList(),
-              )),
+          Obx(() {
+            if (accounts.isEmpty) {
+              return Container(
+                padding: AppResponsive.padding(all: 3),
+                child: Center(
+                  child: Text(
+                    'Belum ada data akun',
+                    style: AppText.bodyMedium(color: AppColors.dark.withOpacity(0.6)),
+                  ),
+                ),
+              );
+            }
+            
+            return Column(
+              children: accounts.map((account) {
+                return _buildAccountItem(account);
+              }).toList(),
+            );
+          }),
         ],
       ),
     );

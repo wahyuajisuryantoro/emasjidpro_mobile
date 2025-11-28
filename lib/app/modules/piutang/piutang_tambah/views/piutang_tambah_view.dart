@@ -1,5 +1,5 @@
-// PiutangTambahView.dart
-import 'package:emasjid_pro/app/helpers/currency_formatter.dart';
+
+import 'package:emasjid_pro/app/helpers/input_currency_formatter.dart';
 import 'package:emasjid_pro/app/utils/app_colors.dart';
 import 'package:emasjid_pro/app/utils/app_responsive.dart';
 import 'package:emasjid_pro/app/utils/app_text.dart';
@@ -32,7 +32,7 @@ class PiutangTambahView extends GetView<PiutangTambahController> {
             Remix.arrow_left_s_line,
             color: AppColors.dark,
           ),
-          onPressed: () => Get.back(),
+          onPressed: () => Get.back(result: 'refresh'),
         ),
       ),
       body: Obx(() => controller.isLoading.value
@@ -79,8 +79,7 @@ class PiutangTambahView extends GetView<PiutangTambahController> {
             controller: controller.amountController,
             keyboardType: TextInputType.number,
             inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              CurrencyInputFormatter(),
+              IndonesiaCurrencyFormatter()
             ],
             prefixIcon: Icon(
               Remix.money_dollar_circle_line,

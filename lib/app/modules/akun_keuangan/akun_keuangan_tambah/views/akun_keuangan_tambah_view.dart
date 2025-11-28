@@ -1,4 +1,3 @@
-import 'package:emasjid_pro/app/helpers/currency_formatter.dart';
 import 'package:emasjid_pro/app/utils/app_colors.dart';
 import 'package:emasjid_pro/app/utils/app_responsive.dart';
 import 'package:emasjid_pro/app/utils/app_text.dart';
@@ -31,7 +30,17 @@ class AkunKeuanganTambahView extends GetView<AkunKeuanganTambahController> {
           onPressed: () => Get.back(),
         ),
       ),
-      body: _buildContent(),
+      body: Obx(() {
+        if (controller.isLoadingCategories.value) {
+          return Center(
+            child: CircularProgressIndicator(
+              color: AppColors.primary,
+            ),
+          );
+        }
+        
+        return _buildContent();
+      }),
       bottomNavigationBar: _buildBottomBar(),
     );
   }
@@ -42,46 +51,137 @@ class AkunKeuanganTambahView extends GetView<AkunKeuanganTambahController> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildTextField(
-            label: 'Kode Akun',
-            hint: 'Masukkan kode akun (contoh: 101)',
-            controller: controller.kodeController,
-            keyboardType: TextInputType.number,
+          // Info card
+          Container(
+            padding: AppResponsive.padding(all: 3),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+            ),
+            child: Row(
+              children: [
+                Icon(Remix.information_line, color: AppColors.primary),
+                SizedBox(width: AppResponsive.w(2)),
+                Expanded(
+                  child: Text(
+                    'Kode akun akan digenerate otomatis sesuai kategori. Anda bisa mengubahnya jika diperlukan.',
+                    style: AppText.small(color: AppColors.primary),
+                  ),
+                ),
+              ],
+            ),
           ),
           SizedBox(height: AppResponsive.h(3)),
+          
+          _buildDropdownField(
+            label: 'Kategori Akun',
+            value: controller.selectedKategoriCode,
+            items: controller.kategoriOptions,
+            onChanged: controller.onKategoriChanged,
+          ),
+          SizedBox(height: AppResponsive.h(3)),
+          
+          _buildTextField(
+            label: 'Kode Akun',
+            hint: 'Otomatis digenerate (bisa diubah)',
+            controller: controller.kodeController,
+            keyboardType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(3),
+            ],
+            suffixIcon: IconButton(
+              icon: Icon(Remix.refresh_line, color: AppColors.primary),
+              onPressed: () {
+                if (controller.selectedKategoriCode.value.isNotEmpty) {
+                  controller.generateNextCode(controller.selectedKategoriCode.value);
+                }
+              },
+            ),
+          ),
+          SizedBox(height: AppResponsive.h(3)),
+          
           _buildTextField(
             label: 'Nama Akun',
-            hint: 'Masukkan nama akun',
+            hint: 'Contoh: Kas di Tangan, Bank BCA, dll',
             controller: controller.namaController,
           ),
           SizedBox(height: AppResponsive.h(3)),
-          _buildDropdownField(
-            label: 'Kategori Akun',
-            value: controller.selectedKategori,
-            items: controller.kategoriOptions,
-            onChanged: (value) {
-              if (value != null) {
-                controller.selectedKategori.value = value;
-              }
-            },
-          ),
-          SizedBox(height: AppResponsive.h(3)),
+          
           _buildTextField(
             label: 'Saldo Awal',
-            hint: 'Rp 0',
+            hint: '0',
             controller: controller.saldoAwalController,
             keyboardType: TextInputType.number,
             inputFormatters: [
               FilteringTextInputFormatter.digitsOnly,
-              CurrencyInputFormatter(),
             ],
             prefixIcon: Padding(
               padding: AppResponsive.padding(left: 3, right: 1),
-              child: Text(
-                'Rp',
-                style: AppText.bodyMedium(color: AppColors.dark),
+              child: Align(
+                widthFactor: 1.0,
+                heightFactor: 1.0,
+                child: Text(
+                  'Rp',
+                  style: AppText.bodyMedium(color: AppColors.dark),
+                ),
               ),
             ),
+          ),
+          SizedBox(height: AppResponsive.h(3)),
+          
+          // Cash and Bank checkbox (hanya untuk Aktiva Lancar)
+          Obx(() {
+            if (controller.selectedKategoriCode.value == '1') {
+              return Column(
+                children: [
+                  Container(
+                    padding: AppResponsive.padding(all: 3),
+                    decoration: BoxDecoration(
+                      color: AppColors.success.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppColors.success.withOpacity(0.2)),
+                    ),
+                    child: Row(
+                      children: [
+                        Obx(() => Checkbox(
+                          value: controller.isCashAndBank.value,
+                          onChanged: (value) {
+                            controller.isCashAndBank.value = value ?? false;
+                          },
+                          activeColor: AppColors.success,
+                        )),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Akun Kas atau Bank',
+                                style: AppText.bodyMedium(color: AppColors.dark),
+                              ),
+                              Text(
+                                'Centang jika akun ini adalah kas atau rekening bank',
+                                style: AppText.small(color: AppColors.dark.withOpacity(0.7)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: AppResponsive.h(3)),
+                ],
+              );
+            }
+            return SizedBox.shrink();
+          }),
+          
+          _buildTextField(
+            label: 'Deskripsi (Opsional)',
+            hint: 'Keterangan tambahan tentang akun ini',
+            controller: controller.deskripsiController,
+            maxLines: 3,
           ),
         ],
       ),
@@ -96,6 +196,7 @@ class AkunKeuanganTambahView extends GetView<AkunKeuanganTambahController> {
     TextInputType keyboardType = TextInputType.text,
     List<TextInputFormatter>? inputFormatters,
     Widget? prefixIcon,
+    Widget? suffixIcon,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,6 +215,7 @@ class AkunKeuanganTambahView extends GetView<AkunKeuanganTambahController> {
           decoration: InputDecoration(
             hintText: hint,
             prefixIcon: prefixIcon,
+            suffixIcon: suffixIcon,
             hintStyle: AppText.bodyMedium(color: AppColors.dark.withOpacity(0.5)),
             contentPadding: AppResponsive.padding(all: 2),
             border: OutlineInputBorder(
@@ -138,7 +240,7 @@ class AkunKeuanganTambahView extends GetView<AkunKeuanganTambahController> {
   Widget _buildDropdownField({
     required String label,
     required RxString value,
-    required List<String> items,
+    required RxList<Map<String, dynamic>> items,
     required Function(String?) onChanged,
   }) {
     return Column(
@@ -159,7 +261,11 @@ class AkunKeuanganTambahView extends GetView<AkunKeuanganTambahController> {
           ),
           child: DropdownButtonHideUnderline(
             child: Obx(() => DropdownButton<String>(
-              value: value.value,
+              value: value.value.isEmpty ? null : value.value,
+              hint: Text(
+                'Pilih kategori akun',
+                style: AppText.bodyMedium(color: AppColors.dark.withOpacity(0.5)),
+              ),
               icon: Icon(
                 Remix.arrow_down_s_line,
                 color: AppColors.dark,
@@ -167,10 +273,10 @@ class AkunKeuanganTambahView extends GetView<AkunKeuanganTambahController> {
               isExpanded: true,
               style: AppText.bodyMedium(color: AppColors.dark),
               onChanged: onChanged,
-              items: items.map<DropdownMenuItem<String>>((String value) {
+              items: items.map<DropdownMenuItem<String>>((Map<String, dynamic> item) {
                 return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
+                  value: item['code'],
+                  child: Text('${item['code']} - ${item['name']}'),
                 );
               }).toList(),
             )),
@@ -193,8 +299,8 @@ class AkunKeuanganTambahView extends GetView<AkunKeuanganTambahController> {
           ),
         ],
       ),
-      child: ElevatedButton(
-        onPressed: controller.saveAccount,
+      child: Obx(() => ElevatedButton(
+        onPressed: controller.isLoading.value ? null : controller.saveAccount,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           padding: AppResponsive.padding(vertical: 2),
@@ -202,11 +308,20 @@ class AkunKeuanganTambahView extends GetView<AkunKeuanganTambahController> {
             borderRadius: BorderRadius.circular(8),
           ),
         ),
-        child: Text(
-          'Simpan Akun',
-          style: AppText.button(color: Colors.white),
-        ),
-      ),
+        child: controller.isLoading.value
+            ? SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              )
+            : Text(
+                'Simpan Akun',
+                style: AppText.button(color: Colors.white),
+              ),
+      )),
     );
   }
 }

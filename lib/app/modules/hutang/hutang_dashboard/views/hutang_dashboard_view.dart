@@ -40,7 +40,9 @@ class HutangDashboardView extends GetView<HutangDashboardController> {
         }
 
         return RefreshIndicator(
-          onRefresh: () => controller.fetchDashboardData(),
+          onRefresh: () async {
+            await controller.refreshData();
+          },
           color: AppColors.primary,
           child: SingleChildScrollView(
             padding: AppResponsive.padding(horizontal: 5, vertical: 3),
@@ -50,7 +52,7 @@ class HutangDashboardView extends GetView<HutangDashboardController> {
                 _buildPeriodSummaryCards(),
                 SizedBox(height: AppResponsive.h(4)),
                 _buildActivityMenu(),
-                 SizedBox(height: AppResponsive.h(4)),
+                SizedBox(height: AppResponsive.h(4)),
                 _buildKategoriHutang(),
                 SizedBox(height: AppResponsive.h(4)),
                 _buildHutangList(),
@@ -60,7 +62,6 @@ class HutangDashboardView extends GetView<HutangDashboardController> {
           ),
         );
       }),
-     
     );
   }
 
@@ -87,11 +88,10 @@ class HutangDashboardView extends GetView<HutangDashboardController> {
                         size: 23,
                       ),
                     ),
-                     SizedBox(width: AppResponsive.w(1)),
+                    SizedBox(width: AppResponsive.w(1)),
                     Text(
                       'Total Hutang',
-                      style: AppText.pSmall(
-                          color: AppColors.white),
+                      style: AppText.pSmall(color: AppColors.white),
                     ),
                   ],
                 ),
@@ -110,7 +110,6 @@ class HutangDashboardView extends GetView<HutangDashboardController> {
             decoration: BoxDecoration(
               color: AppColors.info,
               borderRadius: BorderRadius.circular(15),
-              
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -119,7 +118,6 @@ class HutangDashboardView extends GetView<HutangDashboardController> {
                   children: [
                     Container(
                       padding: AppResponsive.padding(all: 1),
-                     
                       child: Icon(
                         Remix.bill_line,
                         color: AppColors.white,
@@ -129,13 +127,12 @@ class HutangDashboardView extends GetView<HutangDashboardController> {
                     SizedBox(width: AppResponsive.w(1)),
                     Text(
                       'Total Tagihan',
-                      style: AppText.pSmall(
-                          color: AppColors.white),
+                      style: AppText.pSmall(color: AppColors.white),
                     ),
                   ],
                 ),
                 Text(
-                   controller.totalTagihan.value,
+                  controller.totalTagihan.value,
                   style: AppText.h5(color: AppColors.white),
                 ),
               ],
@@ -146,9 +143,6 @@ class HutangDashboardView extends GetView<HutangDashboardController> {
     );
   }
 
-
-  
-
   Widget _buildActivityMenu() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -156,15 +150,21 @@ class HutangDashboardView extends GetView<HutangDashboardController> {
         _buildActivityCard(
           icon: Remix.add_circle_fill,
           title: "Transaksi",
-          onTap: () {
-            Get.toNamed(Routes.HUTANG_TAMBAH);
+          onTap: () async {
+            final result = await Get.toNamed(Routes.HUTANG_TAMBAH);
+            if (result == 'refresh') {
+              controller.refreshData();
+            }
           },
         ),
         _buildActivityCard(
           icon: Remix.history_fill,
           title: "Riwayat",
-          onTap: () {
-            Get.toNamed(Routes.HUTANG_DAFTAR);
+         onTap: () async {
+            final result = await Get.toNamed(Routes.HUTANG_DAFTAR);
+            if (result == 'refresh') {
+              controller.refreshData();
+            }
           },
         ),
         _buildActivityCard(
@@ -313,143 +313,143 @@ class HutangDashboardView extends GetView<HutangDashboardController> {
     );
   }
 
- // In your HutangDashboardView class:
+  // In your HutangDashboardView class:
 
-Widget _buildHutangList() {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            'Daftar Hutang',
-            style: AppText.h6(color: AppColors.dark),
-          ),
-          TextButton(
-            onPressed: controller.navigateToDaftarHutang,
-            child: Text(
-              'Lihat Semua',
-              style: AppText.pSmall(color: AppColors.primary),
+  Widget _buildHutangList() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Daftar Hutang',
+              style: AppText.h6(color: AppColors.dark),
             ),
-          ),
-        ],
-      ),
-      SizedBox(height: AppResponsive.h(2)),
-      Container(
-        padding: AppResponsive.padding(all: 0),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              spreadRadius: 1,
-              blurRadius: 10,
-              offset: const Offset(0, 2),
+            TextButton(
+              onPressed: controller.navigateToDaftarHutang,
+              child: Text(
+                'Lihat Semua',
+                style: AppText.pSmall(color: AppColors.primary),
+              ),
             ),
           ],
         ),
-        child: Obx(() {
-          // Filter out paid debts
-          final filteredHutang = controller.daftarHutang
-              .where((hutang) => hutang['status'] != 'Lunas')
-              .toList();
-          
-          if (filteredHutang.isEmpty) {
-            return Container(
-              padding: AppResponsive.padding(all: 3),
-              child: Center(
-                child: Column(
-                  children: [
-                    Icon(
-                      Remix.file_list_3_line,
-                      color: AppColors.muted,
-                      size: 32,
-                    ),
-                    SizedBox(height: AppResponsive.h(1)),
-                    Text(
-                      'Belum ada hutang aktif',
-                      style: AppText.p(color: AppColors.muted),
-                    ),
-                  ],
-                ),
+        SizedBox(height: AppResponsive.h(2)),
+        Container(
+          padding: AppResponsive.padding(all: 0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                spreadRadius: 1,
+                blurRadius: 10,
+                offset: const Offset(0, 2),
               ),
+            ],
+          ),
+          child: Obx(() {
+            // Filter out paid debts
+            final filteredHutang = controller.daftarHutang
+                .where((hutang) => hutang['status'] != 'Lunas')
+                .toList();
+
+            if (filteredHutang.isEmpty) {
+              return Container(
+                padding: AppResponsive.padding(all: 3),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(
+                        Remix.file_list_3_line,
+                        color: AppColors.muted,
+                        size: 32,
+                      ),
+                      SizedBox(height: AppResponsive.h(1)),
+                      Text(
+                        'Belum ada hutang aktif',
+                        style: AppText.p(color: AppColors.muted),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            return Column(
+              children: filteredHutang.map((hutang) {
+                return _buildHutangItem(hutang);
+              }).toList(),
             );
-          }
+          }),
+        ),
+      ],
+    );
+  }
 
-          return Column(
-            children: filteredHutang.map((hutang) {
-              return _buildHutangItem(hutang);
-            }).toList(),
-          );
-        }),
-      ),
-    ],
-  );
-}
-
-Widget _buildHutangItem(Map<String, dynamic> hutang) {
-  return InkWell(
-    onTap: () => controller.navigateToDetailHutang(hutang['id'].toString()),
-    child: Container(
-      padding: AppResponsive.padding(all: 3),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: AppColors.muted.withOpacity(0.2),
-            width: 1,
+  Widget _buildHutangItem(Map<String, dynamic> hutang) {
+    return InkWell(
+      onTap: () => controller.navigateToDetailHutang(hutang['id'].toString()),
+      child: Container(
+        padding: AppResponsive.padding(all: 3),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: AppColors.muted.withOpacity(0.2),
+              width: 1,
+            ),
           ),
         ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: AppResponsive.w(10),
-            height: AppResponsive.w(10),
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                hutang['nama'].isNotEmpty
-                    ? hutang['nama'].substring(0, 1)
-                    : 'H',
-                style: AppText.h5(color: AppColors.white),
+        child: Row(
+          children: [
+            Container(
+              width: AppResponsive.w(10),
+              height: AppResponsive.w(10),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Text(
+                  hutang['nama'].isNotEmpty
+                      ? hutang['nama'].substring(0, 1)
+                      : 'H',
+                  style: AppText.h5(color: AppColors.white),
+                ),
               ),
             ),
-          ),
-          SizedBox(width: AppResponsive.w(3)),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            SizedBox(width: AppResponsive.w(3)),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    hutang['nama'],
+                    style: AppText.pSmallBold(color: AppColors.dark),
+                  ),
+                  SizedBox(height: AppResponsive.h(0.5)),
+                  Text(
+                    hutang['kategori'],
+                    style:
+                        AppText.small(color: AppColors.dark.withOpacity(0.6)),
+                  ),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  hutang['nama'],
+                  hutang['sisa'],
                   style: AppText.pSmallBold(color: AppColors.dark),
-                ),
-                SizedBox(height: AppResponsive.h(0.5)),
-                Text(
-                  hutang['kategori'],
-                  style:
-                      AppText.small(color: AppColors.dark.withOpacity(0.6)),
                 ),
               ],
             ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                hutang['sisa'],
-                style: AppText.pSmallBold(color: AppColors.dark),
-              ),    
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 }

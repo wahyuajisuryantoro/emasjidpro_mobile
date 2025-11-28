@@ -1,3 +1,4 @@
+import 'package:emasjid_pro/app/helpers/input_currency_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -6,7 +7,6 @@ import '../controllers/hutang_tambah_controller.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_responsive.dart';
 import '../../../../utils/app_text.dart';
-import '../../../../helpers/currency_formatter.dart';
 
 class HutangTambahView extends GetView<HutangTambahController> {
   const HutangTambahView({Key? key}) : super(key: key);
@@ -29,7 +29,7 @@ class HutangTambahView extends GetView<HutangTambahController> {
             Remix.arrow_left_s_line,
             color: AppColors.dark,
           ),
-          onPressed: () => Get.back(result: false),
+          onPressed: () => Get.back(result: 'refresh'),
         ),
       ),
       body: Obx(() => controller.isLoading.value
@@ -76,8 +76,7 @@ class HutangTambahView extends GetView<HutangTambahController> {
             controller: controller.amountController,
             keyboardType: TextInputType.number,
             inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              CurrencyInputFormatter(),
+              IndonesiaCurrencyFormatter()
             ],
             prefixIcon: Icon(
               Remix.money_dollar_circle_line,

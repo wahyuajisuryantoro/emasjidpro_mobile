@@ -60,7 +60,7 @@ class PiutangDashboardController extends GetxController {
 
           piutangCount.value = ringkasan['piutangCount'] ?? 0;
           terhutangCount.value = ringkasan['penghutangCount'] ?? 0;
-          
+
           if (data['daftarPiutang'] != null && data['daftarPiutang'] is List) {
             final List<dynamic> piutangList = data['daftarPiutang'];
             final List<Map<String, dynamic>> processedPiutang = [];
@@ -146,7 +146,7 @@ class PiutangDashboardController extends GetxController {
     } catch (e) {
       Get.snackbar(
         'Error',
-        'Failed to load dashboard data: $e',
+        'Terjadi Kesalahan',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -155,6 +155,10 @@ class PiutangDashboardController extends GetxController {
     } finally {
       isLoading(false);
     }
+  }
+
+  Future<void> refreshData() async {
+    await fetchDashboardData();
   }
 
   String _ensureString(dynamic value) {

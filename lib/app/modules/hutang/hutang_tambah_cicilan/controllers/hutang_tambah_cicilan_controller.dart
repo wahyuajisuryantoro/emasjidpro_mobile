@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:emasjid_pro/app/constant/base_url.dart';
 import 'package:emasjid_pro/app/modules/home/controllers/home_controller.dart';
+import 'package:emasjid_pro/app/modules/hutang/hutang_detail/controllers/hutang_detail_controller.dart';
+import 'package:emasjid_pro/app/routes/app_pages.dart';
 import 'package:emasjid_pro/app/services/storage_services.dart';
 import 'package:emasjid_pro/app/utils/app_text.dart';
 import 'package:file_picker/file_picker.dart';
@@ -10,7 +12,6 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:emasjid_pro/app/utils/app_responsive.dart';
 import 'package:intl/intl.dart';
-import 'package:emasjid_pro/app/helpers/currency_formatter.dart';
 import 'package:emasjid_pro/app/utils/app_colors.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:http/http.dart' as http;
@@ -51,8 +52,6 @@ class HutangTambahCicilanController extends GetxController {
   final attachmentName = ''.obs;
   final attachmentSize = ''.obs;
   Rx<File?> attachmentFile = Rx<File?>(null);
-
-  final currencyFormatter = CurrencyInputFormatter();
 
   void initResponsive(BuildContext context) {
     AppResponsive().init(context);
@@ -386,8 +385,12 @@ class HutangTambahCicilanController extends GetxController {
           if (Get.isRegistered<HomeController>()) {
             Get.find<HomeController>().refreshNotificationCount();
           }
-          Future.delayed(const Duration(seconds: 1), () {
-            Get.back(result: true);
+          Future.delayed(const Duration(milliseconds: 500), () {
+            Get.until((route) =>
+                route.settings.name?.contains('hutang-detail') == true);
+            if (Get.isRegistered<HutangDetailController>()) {
+              Get.find<HutangDetailController>().fetchDetailHutang();
+            }
           });
         } else {
           throw Exception(responseData['message'] ?? 'Gagal menyimpan cicilan');
@@ -406,10 +409,6 @@ class HutangTambahCicilanController extends GetxController {
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
-
-      Future.delayed(const Duration(seconds: 1), () {
-        Get.back(result: true);
-      });
     } finally {
       isSaving(false);
     }

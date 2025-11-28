@@ -493,7 +493,7 @@ class PiutangDaftarController extends GetxController {
   // Navigate to detail piutang
   void navigateToDetailPiutang(String id) {
     Get.toNamed(Routes.PIUTANG_DETAIL, arguments: {'id': id})?.then((result) {
-      if (result != null) {
+      if (result == 'refresh') {
         fetchDaftarPiutang();
       }
     });
@@ -502,7 +502,7 @@ class PiutangDaftarController extends GetxController {
   // Navigate to tambah piutang
   void navigateToTambahPiutang() {
     Get.toNamed(Routes.PIUTANG_TAMBAH)?.then((result) {
-      if (result != null) {
+      if (result == 'refresh') {
         fetchDaftarPiutang();
       }
     });

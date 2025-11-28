@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:emasjid_pro/app/constant/base_url.dart';
 import 'package:emasjid_pro/app/modules/home/controllers/home_controller.dart';
+import 'package:emasjid_pro/app/routes/app_pages.dart';
 import 'package:emasjid_pro/app/services/storage_services.dart';
 import 'package:emasjid_pro/app/utils/app_text.dart';
 import 'package:file_picker/file_picker.dart';
@@ -9,7 +10,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:emasjid_pro/app/helpers/currency_formatter.dart';
 import 'package:emasjid_pro/app/utils/app_colors.dart';
 import 'package:emasjid_pro/app/utils/app_responsive.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -18,6 +18,7 @@ import 'package:http/http.dart' as http;
 
 class HutangTambahController extends GetxController {
   final StorageService storage = Get.find<StorageService>();
+  final ScrollController scrollController = ScrollController();
 
   final nameController = TextEditingController();
   final descriptionController = TextEditingController();
@@ -46,8 +47,6 @@ class HutangTambahController extends GetxController {
   final attachmentName = ''.obs;
   final attachmentSize = ''.obs;
 
-  final currencyFormatter = CurrencyInputFormatter();
-
   @override
   void onInit() {
     super.onInit();
@@ -56,6 +55,32 @@ class HutangTambahController extends GetxController {
 
   void initResponsive(BuildContext context) {
     AppResponsive().init(context);
+  }
+
+  void resetFormAndScrollToTop() {
+    nameController.clear();
+    descriptionController.clear();
+    amountController.clear();
+    selectedDate.value = DateTime.now();
+    selectedDueDate.value = DateTime.now().add(const Duration(days: 30));
+    formattedSelectedDate.value =
+        DateFormat('EEEE, d MMMM yyyy', 'id_ID').format(DateTime.now());
+    formattedSelectedDueDate.value = DateFormat('EEEE, d MMMM yyyy', 'id_ID')
+        .format(DateTime.now().add(const Duration(days: 30)));
+    if (sourceAccounts.isNotEmpty) {
+      selectedSourceAccount.value = sourceAccounts[0];
+    }
+    if (destinationAccounts.isNotEmpty) {
+      selectedDestinationAccount.value = destinationAccounts[0];
+    }
+    removeAttachment();
+    if (scrollController.hasClients) {
+      scrollController.animateTo(
+        0.0,
+        duration: Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   Future<void> fetchAccounts() async {
@@ -103,7 +128,7 @@ class HutangTambahController extends GetxController {
     } catch (e) {
       Get.snackbar(
         'Error',
-        'Failed to load accounts data: $e',
+        'Terjadi Kesalahan',
         snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -534,8 +559,8 @@ class HutangTambahController extends GetxController {
           if (Get.isRegistered<HomeController>()) {
             Get.find<HomeController>().refreshNotificationCount();
           }
-          Future.delayed(const Duration(seconds: 1), () {
-            Get.back(result: true);
+          Future.delayed(const Duration(milliseconds: 500), () {
+             Get.offAndToNamed(Routes.HUTANG_DAFTAR, result: 'refresh');
           });
         } else {
           throw Exception(responseData['message'] ?? 'Gagal menyimpan hutang');
@@ -547,7 +572,7 @@ class HutangTambahController extends GetxController {
     } catch (e) {
       Get.snackbar(
         'Error',
-        'Gagal menyimpan hutang: $e',
+        'Gagal menyimpan hutang',
         snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red,
         colorText: Colors.white,

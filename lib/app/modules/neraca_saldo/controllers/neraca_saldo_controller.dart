@@ -29,46 +29,16 @@ class NeracaSaldoController extends GetxController {
   final RxString errorMessage = ''.obs;
 
   // Neraca Saldo data
-  final RxList neracaLeft = [].obs;
-  final RxList neracaRight = [].obs;
   final RxNum totalLeft = RxNum(0);
   final RxNum totalRight = RxNum(0);
   final RxString formattedTotalLeft = ''.obs;
   final RxString formattedTotalRight = ''.obs;
-  final RxNum selisih = RxNum(0);
-  final RxString formattedSelisih = ''.obs;
-  final RxBool neracaBalanced = false.obs;
   final RxInt totalAccountsLeft = 0.obs;
   final RxInt totalAccountsRight = 0.obs;
   final RxList aktivaLancar = [].obs;
   final RxList aktivaTetap = [].obs;
   final RxList kewajiban = [].obs;
   final RxList saldo = [].obs;
-  // Filter - hanya month dan year (tidak ada range untuk neraca saldo)
-  final RxInt selectedMonth = DateTime.now().month.obs;
-  final RxInt selectedYear = DateTime.now().year.obs;
-
-  // Export filter
-  final RxInt exportFromMonth = DateTime.now().month.obs;
-  final RxInt exportFromYear = DateTime.now().year.obs;
-  final RxInt exportToMonth = DateTime.now().month.obs;
-  final RxInt exportToYear = DateTime.now().year.obs;
-  final RxBool exportAllData = false.obs;
-
-  final List<Map<String, dynamic>> monthOptions = [
-    {'value': 1, 'label': 'Januari'},
-    {'value': 2, 'label': 'Februari'},
-    {'value': 3, 'label': 'Maret'},
-    {'value': 4, 'label': 'April'},
-    {'value': 5, 'label': 'Mei'},
-    {'value': 6, 'label': 'Juni'},
-    {'value': 7, 'label': 'Juli'},
-    {'value': 8, 'label': 'Agustus'},
-    {'value': 9, 'label': 'September'},
-    {'value': 10, 'label': 'Oktober'},
-    {'value': 11, 'label': 'November'},
-    {'value': 12, 'label': 'Desember'},
-  ];
 
   final RxString masjidName = 'Masjid'.obs;
   final RxMap laporanData = {}.obs;
@@ -179,14 +149,7 @@ class NeracaSaldoController extends GetxController {
         return;
       }
 
-      Map<String, String> queryParams = {
-        'month': selectedMonth.value.toString(),
-        'year': selectedYear.value.toString(),
-      };
-
-      final uri = Uri.parse(BaseUrl.baseUrl + '/neraca-saldo').replace(
-        queryParameters: queryParams,
-      );
+      final uri = Uri.parse(BaseUrl.baseUrl + '/neraca-saldo');
 
       final response = await http.get(
         uri,
@@ -195,9 +158,6 @@ class NeracaSaldoController extends GetxController {
           'Content-Type': 'application/json',
         },
       );
-      
-      print(response.body);
-      
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
 
@@ -231,13 +191,6 @@ class NeracaSaldoController extends GetxController {
   }
 
   void showExportModal() {
-    // Set default export values sama dengan filter yang sedang aktif
-    exportFromMonth.value = selectedMonth.value;
-    exportFromYear.value = selectedYear.value;
-    exportToMonth.value = selectedMonth.value;
-    exportToYear.value = selectedYear.value;
-    exportAllData.value = false;
-
     Get.dialog(
       Dialog(
         shape: RoundedRectangleBorder(
@@ -264,152 +217,15 @@ class NeracaSaldoController extends GetxController {
                 ],
               ),
               const Divider(),
+              SizedBox(height: AppResponsive.h(2)),
+
+              Text('Konfirmasi Export', style: AppText.pSmallBold(color: AppColors.dark)),
               SizedBox(height: AppResponsive.h(1)),
-
-              // Checkbox untuk export semua data
-              Obx(() => CheckboxListTile(
-                    title: Text('Export Semua Data', style: AppText.p()),
-                    subtitle: Text(
-                        'Export seluruh data neraca saldo tanpa filter periode',
-                        style: AppText.small(color: Colors.grey[600])),
-                    value: exportAllData.value,
-                    onChanged: (value) {
-                      exportAllData.value = value ?? false;
-                    },
-                    activeColor: AppColors.primary,
-                  )),
-
-              SizedBox(height: AppResponsive.h(1)),
-
-              // Filter periode tunggal
-              Obx(() => exportAllData.value
-                  ? SizedBox()
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Periode Export',
-                            style: AppText.pSmallBold(color: AppColors.dark)),
-                        SizedBox(height: AppResponsive.h(1.5)),
-
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.grey[50],
-                            borderRadius: BorderRadius.circular(12),
-                            border:
-                                Border.all(color: Colors.grey[200]!, width: 1),
-                          ),
-                          padding: AppResponsive.padding(all: 2),
-                          child: Row(
-                            children: [
-                              // Month dropdown
-                              Expanded(
-                                child: DropdownButtonFormField<int>(
-                                  value: exportFromMonth.value,
-                                  decoration: InputDecoration(
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                      borderSide:
-                                          BorderSide(color: Colors.grey[300]!),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                      borderSide:
-                                          BorderSide(color: Colors.grey[300]!),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                      borderSide:
-                                          BorderSide(color: AppColors.primary),
-                                    ),
-                                    contentPadding: AppResponsive.padding(
-                                        horizontal: 1.5, vertical: 1),
-                                    filled: true,
-                                    fillColor: Colors.white,
-                                    labelText: 'Bulan',
-                                  ),
-                                  items: monthOptions.map((month) {
-                                    return DropdownMenuItem<int>(
-                                      value: month['value'],
-                                      child: Text(month['label'],
-                                          style: AppText.pSmall()),
-                                    );
-                                  }).toList(),
-                                  onChanged: (value) {
-                                    if (value != null) {
-                                      exportFromMonth.value = value;
-                                      exportToMonth.value = value;
-                                    }
-                                  },
-                                ),
-                              ),
-                              SizedBox(width: AppResponsive.w(2)),
-                              // Year input
-                              SizedBox(
-                                width: 120,
-                                child: TextFormField(
-                                  initialValue: exportFromYear.value.toString(),
-                                  decoration: InputDecoration(
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                      borderSide:
-                                          BorderSide(color: Colors.grey[300]!),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                      borderSide:
-                                          BorderSide(color: Colors.grey[300]!),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                      borderSide:
-                                          BorderSide(color: AppColors.primary),
-                                    ),
-                                    contentPadding: AppResponsive.padding(
-                                        horizontal: 1.5, vertical: 1),
-                                    filled: true,
-                                    fillColor: Colors.white,
-                                    labelText: 'Tahun',
-                                  ),
-                                  keyboardType: TextInputType.number,
-                                  onChanged: (value) {
-                                    if (value.isNotEmpty) {
-                                      int? year = int.tryParse(value);
-                                      if (year != null) {
-                                        exportFromYear.value = year;
-                                        exportToYear.value = year;
-                                      }
-                                    }
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        SizedBox(height: AppResponsive.h(1)),
-                        // Info text untuk periode tunggal
-                        Container(
-                          padding: AppResponsive.padding(all: 1.5),
-                          decoration: BoxDecoration(
-                            color: AppColors.info.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.info_outline,
-                                  size: 16, color: AppColors.info),
-                              SizedBox(width: AppResponsive.w(1)),
-                              Expanded(
-                                child: Text(
-                                  'Export untuk periode tunggal yang dipilih',
-                                  style: AppText.small(color: AppColors.info),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    )),
+              
+              Text(
+                'Export laporan neraca per 1 Januari ${DateTime.now().year} sampai ${DateFormat('dd MMMM yyyy', 'id').format(DateTime.now())}',
+                style: AppText.p(color: AppColors.dark),
+              ),
 
               SizedBox(height: AppResponsive.h(3)),
               Row(
@@ -466,18 +282,7 @@ class NeracaSaldoController extends GetxController {
       String? token = _storageService.getToken();
       if (token == null) return {};
 
-      Map<String, String> queryParams = {};
-
-      if (exportAllData.value) {
-        queryParams['all_data'] = 'true';
-      } else {
-        queryParams['month'] = exportFromMonth.value.toString();
-        queryParams['year'] = exportFromYear.value.toString();
-      }
-
-      final uri = Uri.parse(BaseUrl.baseUrl + '/neraca-saldo').replace(
-        queryParameters: queryParams,
-      );
+      final uri = Uri.parse(BaseUrl.baseUrl + '/neraca-saldo');
 
       final response = await http.get(
         uri,
@@ -499,16 +304,11 @@ class NeracaSaldoController extends GetxController {
     }
   }
 
-  // ===================== PDF GENERATION METHODS =====================
   Future<void> generateReport() async {
-    if (isLoading.value) {
-      print('Report generation already in progress');
-      return;
-    }
+    if (isLoading.value) return;
 
     try {
       isLoading.value = true;
-
       _showLoadingDialog('Memproses data...');
 
       await loadLaporanData();
@@ -518,20 +318,16 @@ class NeracaSaldoController extends GetxController {
         throw Exception('Data laporan tidak tersedia');
       }
 
-      if (isDialogOpen.value) {
-        _closeLoadingDialog();
-        await Future.delayed(Duration(milliseconds: 200));
-        _showLoadingDialog('Membuat PDF...');
-      }
+      _closeLoadingDialog();
+      await Future.delayed(Duration(milliseconds: 200));
+      _showLoadingDialog('Membuat PDF...');
 
       final pdf = await _createPDF();
       final fileName = _generateFileName();
 
-      if (isDialogOpen.value) {
-        _closeLoadingDialog();
-        await Future.delayed(Duration(milliseconds: 200));
-        _showLoadingDialog('Menyimpan file...');
-      }
+      _closeLoadingDialog();
+      await Future.delayed(Duration(milliseconds: 200));
+      _showLoadingDialog('Menyimpan file...');
 
       final filePath = await _savePDFToAppDirectory(pdf, fileName);
       _closeLoadingDialog();
@@ -540,8 +336,6 @@ class NeracaSaldoController extends GetxController {
       _showExportSuccessDialog(filePath, fileName);
     } catch (e) {
       _closeLoadingDialog();
-      await Future.delayed(Duration(milliseconds: 200));
-
       _showErrorSnackbar('Gagal membuat PDF');
     } finally {
       isLoading.value = false;
@@ -549,42 +343,36 @@ class NeracaSaldoController extends GetxController {
   }
 
   Future<pw.Document> _createPDF() async {
+    final pdf = pw.Document();
+    late pw.Font ttf;
+    late pw.Font ttfBold;
+    pw.ImageProvider? logoImage;
+
     try {
-      final pdf = pw.Document();
-
-      late pw.Font ttf;
-      late pw.Font ttfBold;
-      pw.ImageProvider? logoImage;
-
-      try {
-        ttf = await PdfGoogleFonts.robotoRegular();
-        ttfBold = await PdfGoogleFonts.robotoBold();
-      } catch (e) {
-        ttf = pw.Font.courier();
-        ttfBold = pw.Font.courierBold();
-      }
-
-      try {
-        logoImage = await _loadLogo();
-      } catch (e) {
-        logoImage = null;
-      }
-
-      pdf.addPage(
-        pw.MultiPage(
-          pageFormat: PdfPageFormat.a4,
-          margin: const pw.EdgeInsets.all(40),
-          build: (pw.Context context) {
-            return _buildFlatWidgetList(ttf, ttfBold, logoImage);
-          },
-        ),
-      );
-
-      return pdf;
+      ttf = await PdfGoogleFonts.robotoRegular();
+      ttfBold = await PdfGoogleFonts.robotoBold();
     } catch (e) {
-      print('Error in _createPDF: $e');
-      rethrow;
+      ttf = pw.Font.courier();
+      ttfBold = pw.Font.courierBold();
     }
+
+    try {
+      logoImage = await _loadLogo();
+    } catch (e) {
+      logoImage = null;
+    }
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(40),
+        build: (pw.Context context) {
+          return _buildFlatWidgetList(ttf, ttfBold, logoImage);
+        },
+      ),
+    );
+
+    return pdf;
   }
 
   List<pw.Widget> _buildFlatWidgetList(
@@ -599,7 +387,6 @@ class NeracaSaldoController extends GetxController {
 
     List<List<dynamic>> tableData = [];
 
-    // Add section header for Aktiva Lancar
     if (aktivaLancar.isNotEmpty) {
       tableData.add(['', 'AKTIVA LANCAR', '', '']);
       for (var item in aktivaLancar) {
@@ -612,7 +399,6 @@ class NeracaSaldoController extends GetxController {
       }
     }
 
-    // Add section header for Aktiva Tetap
     if (aktivaTetap.isNotEmpty) {
       tableData.add(['', 'AKTIVA TETAP', '', '']);
       for (var item in aktivaTetap) {
@@ -625,7 +411,6 @@ class NeracaSaldoController extends GetxController {
       }
     }
 
-    // Add section header for Kewajiban
     if (kewajiban.isNotEmpty) {
       tableData.add(['', 'KEWAJIBAN', '', '']);
       for (var item in kewajiban) {
@@ -638,9 +423,8 @@ class NeracaSaldoController extends GetxController {
       }
     }
 
-    // Add section header for Saldo
     if (saldo.isNotEmpty) {
-      tableData.add(['', 'SALDO', '', '']);
+      tableData.add(['', 'MODAL', '', '']);
       for (var item in saldo) {
         tableData.add([
           item['account_code'] ?? '',
@@ -651,7 +435,6 @@ class NeracaSaldoController extends GetxController {
       }
     }
 
-    // Add totals
     tableData.add([
       '',
       'TOTAL',
@@ -672,7 +455,6 @@ class NeracaSaldoController extends GetxController {
           3: pw.FlexColumnWidth(1.5),
         },
         children: [
-          // Header row
           pw.TableRow(
             decoration: pw.BoxDecoration(color: PdfColor.fromHex('#D6DBDF')),
             children: [
@@ -690,25 +472,24 @@ class NeracaSaldoController extends GetxController {
               ),
               pw.Container(
                 padding: pw.EdgeInsets.all(6),
-                child: pw.Text('Debit (Rp)',
+                child: pw.Text('Aktiva (Rp)',
                     style: pw.TextStyle(font: ttfBold, fontSize: 10),
                     textAlign: pw.TextAlign.center),
               ),
               pw.Container(
                 padding: pw.EdgeInsets.all(6),
-                child: pw.Text('Kredit (Rp)',
+                child: pw.Text('Pasiva (Rp)',
                     style: pw.TextStyle(font: ttfBold, fontSize: 10),
                     textAlign: pw.TextAlign.center),
               ),
             ],
           ),
-          // Data rows
           ...tableData.map((row) {
             bool isTotal = row[1] == 'TOTAL';
             bool isSectionHeader = row[1] == 'AKTIVA LANCAR' ||
                 row[1] == 'AKTIVA TETAP' ||
                 row[1] == 'KEWAJIBAN' ||
-                row[1] == 'SALDO';
+                row[1] == 'MODAL';
 
             return pw.TableRow(
               decoration: isTotal
@@ -768,7 +549,6 @@ class NeracaSaldoController extends GetxController {
     ];
   }
 
-  // Helper methods (sama seperti JurnalUmum)
   pw.Widget _buildKopSurat(pw.Font ttfBold, pw.Font ttf, String masjidName,
       String title, String subtitle, pw.ImageProvider? logoImage) {
     return pw.Column(
@@ -893,57 +673,46 @@ class NeracaSaldoController extends GetxController {
 
   String _formatCurrency(dynamic value) {
     if (value == null) return '0';
-    String valueStr = value.toString();
-    if (valueStr.startsWith('Rp ')) {
-      valueStr = valueStr.substring(3);
-    }
     if (value is num) {
       return value.toString().replaceAllMapped(
             RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
             (match) => '${match[1]}.',
           );
     }
-    return valueStr;
+    return value.toString();
   }
 
   String _getReportTitle() {
-    return 'LAPORAN NERACA SALDO';
+    return 'LAPORAN NERACA';
   }
 
   String _getReportSubtitle() {
-    if (exportAllData.value) {
-      return 'Semua Data';
-    } else {
-      final fromMonthName = monthOptions
-          .firstWhere((m) => m['value'] == exportFromMonth.value)['label'];
-      return '${fromMonthName} ${exportFromYear.value}';
-    }
+    return 'PER ${DateFormat('dd MMMM yyyy', 'id').format(DateTime.now()).toUpperCase()}';
   }
 
   String _generateFileName() {
     final dateStr = DateFormat('ddMMyyyy').format(DateTime.now());
-    return 'Laporan_NeracaSaldo_$dateStr.pdf';
+    return 'Laporan_Neraca_$dateStr.pdf';
   }
 
-  Future<String> _savePDFToAppDirectory(
-      pw.Document pdf, String fileName) async {
-    try {
-      final Uint8List bytes = await pdf.save();
-      final Directory appDocDir = await getApplicationDocumentsDirectory();
-      final Directory reportsDir = Directory('${appDocDir.path}/Reports');
+  String getCurrentPeriodText() {
+    return 'Per ${DateFormat('dd MMMM yyyy', 'id').format(DateTime.now())}';
+  }
 
-      if (!await reportsDir.exists()) {
-        await reportsDir.create(recursive: true);
-      }
+  Future<String> _savePDFToAppDirectory(pw.Document pdf, String fileName) async {
+    final Uint8List bytes = await pdf.save();
+    final Directory appDocDir = await getApplicationDocumentsDirectory();
+    final Directory reportsDir = Directory('${appDocDir.path}/Reports');
 
-      final String filePath = '${reportsDir.path}/$fileName';
-      final File file = File(filePath);
-      await file.writeAsBytes(bytes);
-
-      return filePath;
-    } catch (e) {
-      rethrow;
+    if (!await reportsDir.exists()) {
+      await reportsDir.create(recursive: true);
     }
+
+    final String filePath = '${reportsDir.path}/$fileName';
+    final File file = File(filePath);
+    await file.writeAsBytes(bytes);
+
+    return filePath;
   }
 
   Future<pw.ImageProvider> _loadLogo() async {
@@ -952,30 +721,19 @@ class NeracaSaldoController extends GetxController {
       String? logoUrl;
       if (logoData != null) {
         logoUrl = logoData['logo']?.toString();
-
         if (logoUrl != null && !logoUrl.startsWith('http')) {
-          logoUrl =
-              'https://storage.googleapis.com/emasjid-storage/emasjidpro/$logoUrl';
+          logoUrl = 'https://storage.googleapis.com/emasjid-storage/emasjidpro/$logoUrl';
         }
       }
       String? cleanUrl = _cleanAndValidateUrl(logoUrl);
 
       if (cleanUrl != null) {
-        try {
-          final response = await http
-              .get(Uri.parse(cleanUrl))
-              .timeout(Duration(seconds: 15));
-          if (response.statusCode == 200 && response.bodyBytes.isNotEmpty) {
-            return pw.MemoryImage(response.bodyBytes);
-          } else {
-            return await _loadDefaultLogo();
-          }
-        } catch (e) {
-          return await _loadDefaultLogo();
+        final response = await http.get(Uri.parse(cleanUrl)).timeout(Duration(seconds: 15));
+        if (response.statusCode == 200 && response.bodyBytes.isNotEmpty) {
+          return pw.MemoryImage(response.bodyBytes);
         }
-      } else {
-        return await _loadDefaultLogo();
       }
+      return await _loadDefaultLogo();
     } catch (e) {
       return await _loadDefaultLogo();
     }
@@ -988,13 +746,10 @@ class NeracaSaldoController extends GetxController {
   }
 
   String? _cleanAndValidateUrl(String? url) {
-    if (url == null || url.isEmpty || url == 'null') {
-      return null;
-    }
+    if (url == null || url.isEmpty || url == 'null') return null;
     String cleanUrl = url.replaceAll('\\/', '/');
     Uri? uri = Uri.tryParse(cleanUrl);
-    if (uri != null &&
-        (cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://'))) {
+    if (uri != null && (cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://'))) {
       return cleanUrl;
     }
     return null;
@@ -1014,10 +769,8 @@ class NeracaSaldoController extends GetxController {
   Future<void> _sharePDF(String filePath) async {
     try {
       final share_plus.XFile file = share_plus.XFile(filePath);
-      String shareText = 'Laporan Neraca Saldo - ${_getReportSubtitle()}';
-
-      await share_plus.Share.shareXFiles([file],
-          text: shareText, subject: shareText);
+      String shareText = 'Laporan Neraca - ${_getReportSubtitle()}';
+      await share_plus.Share.shareXFiles([file], text: shareText, subject: shareText);
     } catch (e) {
       _showErrorSnackbar('Terjadi kesalahan saat berbagi: $e');
     }
@@ -1032,7 +785,6 @@ class NeracaSaldoController extends GetxController {
         isDialogOpen.value = false;
       }
     } catch (e) {
-      print('Error closing dialog: $e');
       isDialogOpen.value = false;
     }
   }
@@ -1042,17 +794,11 @@ class NeracaSaldoController extends GetxController {
       isDialogOpen.value = false;
       int maxAttempts = 5;
       int attempts = 0;
-
       while (Get.isDialogOpen == true && attempts < maxAttempts) {
         Get.back();
         attempts++;
       }
-
-      if (attempts >= maxAttempts) {
-        print('Warning: Maximum dialog close attempts reached');
-      }
     } catch (e) {
-      print('Error in _forceCloseDialog: $e');
       isDialogOpen.value = false;
     }
   }
@@ -1063,7 +809,6 @@ class NeracaSaldoController extends GetxController {
       Future.delayed(Duration(milliseconds: 100), () {
         if (!isDialogOpen.value) {
           isDialogOpen.value = true;
-
           Get.dialog(
             WillPopScope(
               onWillPop: () async => false,
@@ -1076,16 +821,9 @@ class NeracaSaldoController extends GetxController {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      CircularProgressIndicator(
-                        color: AppColors.primary,
-                        strokeWidth: 3,
-                      ),
+                      CircularProgressIndicator(color: AppColors.primary, strokeWidth: 3),
                       SizedBox(height: AppResponsive.h(3)),
-                      Text(
-                        message,
-                        style: AppText.p(color: AppColors.dark),
-                        textAlign: TextAlign.center,
-                      ),
+                      Text(message, style: AppText.p(color: AppColors.dark), textAlign: TextAlign.center),
                     ],
                   ),
                 ),
@@ -1127,9 +865,8 @@ class NeracaSaldoController extends GetxController {
                     style: AppText.h6(color: AppColors.dark),
                     textAlign: TextAlign.center),
                 SizedBox(height: AppResponsive.h(1)),
-                Text('Laporan neraca saldo telah berhasil diekspor ke PDF',
-                    style:
-                        AppText.pSmall(color: AppColors.dark.withOpacity(0.7)),
+                Text('Laporan neraca telah berhasil diekspor ke PDF',
+                    style: AppText.pSmall(color: AppColors.dark.withOpacity(0.7)),
                     textAlign: TextAlign.center),
                 SizedBox(height: AppResponsive.h(1)),
                 Container(
@@ -1159,8 +896,7 @@ class NeracaSaldoController extends GetxController {
                           backgroundColor: AppColors.primary,
                           padding: AppResponsive.padding(vertical: 2.5),
                           shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(AppResponsive.w(2)),
+                            borderRadius: BorderRadius.circular(AppResponsive.w(2)),
                           ),
                         ),
                         child: Text(
@@ -1186,8 +922,7 @@ class NeracaSaldoController extends GetxController {
                               backgroundColor: AppColors.secondary,
                               padding: AppResponsive.padding(vertical: 2.5),
                               shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(AppResponsive.w(2)),
+                                borderRadius: BorderRadius.circular(AppResponsive.w(2)),
                               ),
                             ),
                             child: Text(
@@ -1208,8 +943,7 @@ class NeracaSaldoController extends GetxController {
                               backgroundColor: AppColors.danger,
                               padding: AppResponsive.padding(vertical: 2.5),
                               shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(AppResponsive.w(2)),
+                                borderRadius: BorderRadius.circular(AppResponsive.w(2)),
                               ),
                             ),
                             child: Text(
@@ -1233,18 +967,15 @@ class NeracaSaldoController extends GetxController {
 
   void _showFileLocationDialog(String filePath) {
     _forceCloseDialog();
-
     Future.delayed(Duration(milliseconds: 100), () {
       Get.dialog(
         AlertDialog(
           title: Text('File Tersimpan', style: AppText.h6()),
-          content: Text(
-              'File PDF berhasil disimpan di aplikasi. Anda dapat mengakses file melalui file manager.'),
+          content: Text('File PDF berhasil disimpan di aplikasi. Anda dapat mengakses file melalui file manager.'),
           actions: [
             TextButton(
                 onPressed: () => Get.back(),
-                child:
-                    Text('OK', style: AppText.button(color: AppColors.primary)))
+                child: Text('OK', style: AppText.button(color: AppColors.primary)))
           ],
         ),
       );
@@ -1256,13 +987,5 @@ class NeracaSaldoController extends GetxController {
         backgroundColor: AppColors.danger,
         colorText: AppColors.white,
         snackPosition: SnackPosition.TOP);
-  }
-
-  String getMonthName(int month) {
-    return monthOptions.firstWhere((m) => m['value'] == month)['label'];
-  }
-
-  String getCurrentPeriodText() {
-    return '${getMonthName(selectedMonth.value)} ${selectedYear.value}';
   }
 }

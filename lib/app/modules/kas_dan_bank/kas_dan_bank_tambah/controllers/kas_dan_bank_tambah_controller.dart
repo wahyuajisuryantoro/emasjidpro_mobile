@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'dart:io';
-import 'package:emasjid_pro/app/helpers/currency_formatter.dart';
 import 'package:emasjid_pro/app/utils/app_colors.dart';
 import 'package:emasjid_pro/app/utils/app_responsive.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
@@ -48,9 +47,7 @@ class KasDanBankTambahController extends GetxController {
   final attachmentName = ''.obs;
   final attachmentSize = ''.obs;
   File? attachmentFile;
-  
-  // Currency formatter
-  final currencyFormatter = CurrencyInputFormatter();
+
   
   // Select date function
   void selectDate(BuildContext context) {

@@ -39,49 +39,47 @@ class HutangDaftarView extends GetView<HutangDaftarController> {
             ),
             onPressed: () => controller.toggleSearchBar(),
           ),
-          IconButton(
-            icon: Icon(
-              Remix.refresh_line,
-              color: AppColors.dark,
-            ),
-            onPressed: () => controller.fetchDaftarHutang(),
-          ),
         ],
       ),
       body: Column(
         children: [
-          Obx(() => AnimatedContainer(
-                duration: Duration(milliseconds: 300),
-                height:
-                    controller.isSearchVisible.value ? AppResponsive.h(8) : 0,
-                child: Container(
-                  color: Colors.white,
-                  padding: AppResponsive.padding(horizontal: 5),
-                  child: TextField(
-                    controller: controller.searchController,
-                    onChanged: controller.onSearchChanged,
-                    decoration: InputDecoration(
-                      hintText: 'Cari hutang...',
-                      hintStyle:
-                          AppText.p(color: AppColors.dark.withOpacity(0.4)),
-                      prefixIcon: Icon(Remix.search_line,
-                          color: AppColors.dark.withOpacity(0.5)),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide:
-                            BorderSide(color: AppColors.dark.withOpacity(0.1)),
+          Obx(() => RefreshIndicator(
+                onRefresh: () async {
+                  await controller.refreshData();
+                },
+                child: AnimatedContainer(
+                  duration: Duration(milliseconds: 300),
+                  height:
+                      controller.isSearchVisible.value ? AppResponsive.h(8) : 0,
+                  child: Container(
+                    color: Colors.white,
+                    padding: AppResponsive.padding(horizontal: 5),
+                    child: TextField(
+                      controller: controller.searchController,
+                      onChanged: controller.onSearchChanged,
+                      decoration: InputDecoration(
+                        hintText: 'Cari hutang...',
+                        hintStyle:
+                            AppText.p(color: AppColors.dark.withOpacity(0.4)),
+                        prefixIcon: Icon(Remix.search_line,
+                            color: AppColors.dark.withOpacity(0.5)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(
+                              color: AppColors.dark.withOpacity(0.1)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(
+                              color: AppColors.dark.withOpacity(0.1)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(color: AppColors.warning),
+                        ),
+                        contentPadding:
+                            AppResponsive.padding(vertical: 2, horizontal: 3),
                       ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide:
-                            BorderSide(color: AppColors.dark.withOpacity(0.1)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: AppColors.warning),
-                      ),
-                      contentPadding:
-                          AppResponsive.padding(vertical: 2, horizontal: 3),
                     ),
                   ),
                 ),
@@ -270,7 +268,7 @@ class HutangDaftarView extends GetView<HutangDaftarController> {
               Icon(
                 Remix.file_search_line,
                 size: 70,
-                color: AppColors.dark.withOpacity(0.3),
+                color: AppColors.dark,
               ),
               SizedBox(height: AppResponsive.h(2)),
               Text(
@@ -340,7 +338,6 @@ class HutangDaftarView extends GetView<HutangDaftarController> {
                   hutang['kategori']?.toString() ?? 'Umum',
                   style: AppText.small(color: AppColors.dark.withOpacity(0.6)),
                 ),
-                
               ],
             ),
           ),
@@ -351,7 +348,6 @@ class HutangDaftarView extends GetView<HutangDaftarController> {
                 hutang['formatted_sisa']?.toString() ?? 'Rp 0',
                 style: AppText.pSmallBold(color: AppColors.dark),
               ),
-             
               SizedBox(height: AppResponsive.h(0.5)),
               Container(
                 padding: AppResponsive.padding(horizontal: 1.5, vertical: 0.5),
@@ -363,9 +359,7 @@ class HutangDaftarView extends GetView<HutangDaftarController> {
                 ),
                 child: Text(
                   hutang['status']?.toString() ?? 'Belum Lunas',
-                  style: AppText.small(
-                    color: AppColors.white
-                  ),
+                  style: AppText.small(color: AppColors.white),
                 ),
               ),
             ],

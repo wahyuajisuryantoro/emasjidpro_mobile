@@ -53,30 +53,31 @@ class User {
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      userId: json['user_id'],
-      username: json['username'],
-      name: json['name'],
-      category: json['category'],
-      replika: json['replika'],
-      referral: json['referral'],
-      subdomain: json['subdomain'],
-      link: json['link'],
-      numberId: json['number_id'],
-      birth: json['birth'],
-      sex: json['sex'],
-      address: json['address'],
-      city: json['city'],
-      phone: json['phone'],
-      email: json['email'],
-      bankName: json['bank_name'],
-      bankBranch: json['bank_branch'],
-      bankAccountNumber: json['bank_account_number'],
-      bankAccountName: json['bank_account_name'],
-      lastLogin: json['last_login'],
-      lastIpaddress: json['last_ipaddress'],
-      picture: json['picture'],
-      date: json['date'],
-      publish: json['publish'],
+      // Convert user_id dari String ke int
+      userId: int.tryParse(json['user_id']?.toString() ?? '0') ?? 0,
+      username: json['username']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      category: json['category']?.toString() ?? '',
+      replika: json['replika']?.toString() ?? '',
+      referral: json['referral']?.toString() ?? '',
+      subdomain: json['subdomain']?.toString() ?? '',
+      link: json['link']?.toString() ?? '',
+      numberId: json['number_id']?.toString() ?? '',
+      birth: json['birth']?.toString() ?? '',
+      sex: json['sex']?.toString() ?? '',
+      address: json['address']?.toString() ?? '',
+      city: json['city']?.toString() ?? '',
+      phone: json['phone']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      bankName: json['bank_name']?.toString() ?? '',
+      bankBranch: json['bank_branch']?.toString() ?? '',
+      bankAccountNumber: json['bank_account_number']?.toString() ?? '',
+      bankAccountName: json['bank_account_name']?.toString() ?? '',
+      lastLogin: json['last_login']?.toString() ?? '',
+      lastIpaddress: json['last_ipaddress']?.toString() ?? '',
+      picture: json['picture']?.toString() ?? '',
+      date: json['date']?.toString() ?? '',
+      publish: json['publish']?.toString() ?? '',
     );
   }
 
@@ -107,5 +108,11 @@ class User {
       'date': date,
       'publish': publish,
     };
+  }
+
+  // Helper method untuk debug
+  @override
+  String toString() {
+    return 'User(userId: $userId, username: $username, name: $name, email: $email)';
   }
 }

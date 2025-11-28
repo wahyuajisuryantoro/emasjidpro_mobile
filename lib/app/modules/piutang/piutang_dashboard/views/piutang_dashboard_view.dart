@@ -159,15 +159,21 @@ class PiutangDashboardView extends GetView<PiutangDashboardController> {
         _buildActivityCard(
           icon: Remix.add_circle_fill,
           title: "Transaksi",
-          onTap: () {
-            Get.toNamed(Routes.PIUTANG_TAMBAH);
+          onTap: () async {
+            final result = await Get.toNamed(Routes.PIUTANG_TAMBAH);
+            if (result == 'refresh') {
+              controller.refreshData();
+            }
           },
         ),
         _buildActivityCard(
           icon: Remix.history_fill,
           title: "Riwayat",
-          onTap: () {
-            Get.toNamed(Routes.PIUTANG_DAFTAR);
+          onTap: () async {
+            final result = await Get.toNamed(Routes.PIUTANG_DAFTAR);
+            if (result == 'refresh') {
+              controller.refreshData();
+            }
           },
         ),
         _buildActivityCard(

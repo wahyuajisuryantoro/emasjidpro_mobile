@@ -1,3 +1,4 @@
+import 'package:emasjid_pro/app/helpers/input_currency_formatter.dart';
 import 'package:emasjid_pro/app/utils/app_colors.dart';
 import 'package:emasjid_pro/app/utils/app_responsive.dart';
 import 'package:emasjid_pro/app/utils/app_text.dart';
@@ -29,7 +30,7 @@ class PendapatanTransaksiView extends GetView<PendapatanTransaksiController> {
             Remix.arrow_left_s_line,
             color: AppColors.dark,
           ),
-          onPressed: () => Get.back(),
+          onPressed: () => Get.back(result: 'refresh'),
         ),
       ),
       body: Obx(() {
@@ -45,7 +46,37 @@ class PendapatanTransaksiView extends GetView<PendapatanTransaksiController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Form header
-                _buildFormHeader(),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: AppResponsive.w(18),
+                      height: AppResponsive.w(18),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Remix.funds_box_fill,
+                        color: AppColors.primary,
+                        size: 34,
+                      ),
+                    ),
+                    SizedBox(height: AppResponsive.h(2)),
+                    Text(
+                      'Masukkan Detail Transaksi',
+                      style: AppText.h6(color: AppColors.dark),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: AppResponsive.h(1)),
+                    Text(
+                      'Isi semua informasi yang diperlukan untuk mencatat pendapatan baru',
+                      style: AppText.pSmall(
+                          color: AppColors.dark.withOpacity(0.6)),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
 
                 SizedBox(height: AppResponsive.h(4)),
 
@@ -355,8 +386,7 @@ class PendapatanTransaksiView extends GetView<PendapatanTransaksiController> {
             controller: controller.amountController,
             keyboardType: TextInputType.number,
             inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              controller.currencyFormatter,
+              IndonesiaCurrencyFormatter()
             ],
             decoration: InputDecoration(
               hintText: '0',

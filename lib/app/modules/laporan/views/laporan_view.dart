@@ -60,7 +60,7 @@ class LaporanView extends GetView<LaporanController> {
               },
             ),
             _buildReportCard(
-              title: 'Neraca Saldo',
+              title: 'Neraca ',
               description: 'Laporan saldo seluruh akun',
               icon: Remix.scales_line,
               color: AppColors.secondary,

@@ -6,7 +6,6 @@ import 'package:remixicon/remixicon.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_responsive.dart';
 import '../../../../utils/app_text.dart';
-import '../../../../helpers/currency_formatter.dart';
 import '../controllers/kas_dan_bank_tambah_controller.dart';
 
 class KasDanBankTambahView extends GetView<KasDanBankTambahController> {
@@ -96,7 +95,6 @@ class KasDanBankTambahView extends GetView<KasDanBankTambahController> {
             keyboardType: TextInputType.number,
             inputFormatters: [
               FilteringTextInputFormatter.digitsOnly,
-              CurrencyInputFormatter(),
             ],
             prefixIcon: Padding(
               padding: AppResponsive.padding(left: 3, right: 1),

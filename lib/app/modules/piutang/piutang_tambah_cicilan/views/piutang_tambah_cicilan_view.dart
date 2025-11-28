@@ -1,3 +1,4 @@
+import 'package:emasjid_pro/app/helpers/input_currency_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -6,8 +7,6 @@ import '../controllers/piutang_tambah_cicilan_controller.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_responsive.dart';
 import '../../../../utils/app_text.dart';
-import '../../../../helpers/currency_formatter.dart';
-import 'package:intl/intl.dart';
 
 class PiutangTambahCicilanView extends GetView<PiutangTambahCicilanController> {
   const PiutangTambahCicilanView({Key? key}) : super(key: key);
@@ -75,8 +74,7 @@ class PiutangTambahCicilanView extends GetView<PiutangTambahCicilanController> {
             controller: controller.amountController,
             keyboardType: TextInputType.number,
             inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              CurrencyInputFormatter(),
+              IndonesiaCurrencyFormatter()
             ],
             prefixIcon: Icon(
               Remix.money_dollar_circle_line,

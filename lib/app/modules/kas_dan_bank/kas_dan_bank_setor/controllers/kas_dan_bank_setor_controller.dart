@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
 import 'package:emasjid_pro/app/constant/base_url.dart';
-import 'package:emasjid_pro/app/helpers/currency_formatter.dart';
 import 'package:emasjid_pro/app/modules/home/controllers/home_controller.dart';
 import 'package:emasjid_pro/app/services/storage_services.dart';
 import 'package:file_picker/file_picker.dart';
@@ -31,7 +30,6 @@ class KasDanBankSetorController extends GetxController {
   final attachmentName = ''.obs;
   final attachmentSize = ''.obs;
 
-  final currencyFormatter = CurrencyInputFormatter();
 
   void initResponsive(BuildContext context) {
     AppResponsive().init(context);

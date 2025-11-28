@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'dart:convert';
 import 'package:emasjid_pro/app/constant/base_url.dart';
-import 'package:emasjid_pro/app/helpers/currency_formatter.dart';
 import 'package:emasjid_pro/app/modules/home/controllers/home_controller.dart';
+import 'package:emasjid_pro/app/routes/app_pages.dart';
 import 'package:emasjid_pro/app/services/storage_services.dart';
 import 'package:emasjid_pro/app/utils/app_colors.dart';
 import 'package:file_picker/file_picker.dart';
@@ -16,6 +16,7 @@ import 'package:permission_handler/permission_handler.dart';
 
 class PendapatanTransaksiController extends GetxController {
   final StorageService storage = Get.find<StorageService>();
+  final ScrollController scrollController = ScrollController();
 
   final namaController = TextEditingController();
   final descriptionController = TextEditingController();
@@ -35,10 +36,29 @@ class PendapatanTransaksiController extends GetxController {
   final attachmentName = ''.obs;
   final attachmentSize = ''.obs;
 
-  final currencyFormatter = CurrencyInputFormatter();
-
   void initResponsive(BuildContext context) {
     AppResponsive().init(context);
+  }
+
+  void resetFormAndScrollToTop() {
+    namaController.clear();
+    descriptionController.clear();
+    amountController.clear();
+    selectedDate.value = DateTime.now();
+    if (sourceAccounts.isNotEmpty) {
+      selectedSourceAccount.value = sourceAccounts[0];
+    }
+    if (destinationAccounts.isNotEmpty) {
+      selectedDestinationAccount.value = destinationAccounts[0];
+    }
+    removeAttachment();
+    if (scrollController.hasClients) {
+      scrollController.animateTo(
+        0.0,
+        duration: Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   Future<void> fetchAccounts() async {
@@ -321,8 +341,8 @@ class PendapatanTransaksiController extends GetxController {
             Get.find<HomeController>().refreshNotificationCount();
           }
 
-          Future.delayed(const Duration(seconds: 2), () {
-            Get.back(result: true);
+          Future.delayed(const Duration(milliseconds: 500), () {
+            Get.offAndToNamed(Routes.PENDAPATAN_RIWAYAT, result: 'refresh');
           });
         } else {
           throw Exception(

@@ -11,7 +11,6 @@ class HutangDetailController extends GetxController {
   final StorageService storage = Get.find<StorageService>();
   final dynamic arguments = Get.arguments;
 
-  
   final RxString id = ''.obs;
   final RxString nama = ''.obs;
   final RxString keterangan = ''.obs;
@@ -22,15 +21,13 @@ class HutangDetailController extends GetxController {
   final RxString kodeHutang = ''.obs;
   final RxString tipeHutang = ''.obs;
 
-  
   final RxInt totalHutang = 0.obs;
   final RxInt totalCicilan = 0.obs;
   final RxInt sisaHutang = 0.obs;
-  
-  
-  final RxList<Map<String, dynamic>> daftarCicilan = <Map<String, dynamic>>[].obs;
-  
-  
+
+  final RxList<Map<String, dynamic>> daftarCicilan =
+      <Map<String, dynamic>>[].obs;
+
   final RxBool isLoading = true.obs;
 
   @override
@@ -61,12 +58,12 @@ class HutangDetailController extends GetxController {
 
     try {
       isLoading(true);
-      
+
       final token = storage.getToken();
       if (token == null) {
         throw Exception('No authentication token');
       }
-      
+
       final response = await http.get(
         Uri.parse('${BaseUrl.baseUrl}/detail-hutang/${id.value}'),
         headers: {
@@ -74,32 +71,32 @@ class HutangDetailController extends GetxController {
           'Content-Type': 'application/json',
         },
       );
-      
+
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = json.decode(response.body);
-        
+
         if (responseData['success'] == true) {
           final data = responseData['data'];
           final detailHutang = data['detail_hutang'];
-          
-          
+
           id.value = _ensureString(detailHutang['id']);
           nama.value = _ensureString(detailHutang['nama']);
           keterangan.value = _ensureString(detailHutang['keterangan']);
           kategori.value = _ensureString(detailHutang['kategori']);
           status.value = _ensureString(detailHutang['status']);
-          tanggalJatuhTempo.value = _ensureString(detailHutang['tanggal_jatuh_tempo']);
-          tanggalTransaksi.value = _ensureString(detailHutang['tanggal_transaksi']);
+          tanggalJatuhTempo.value =
+              _ensureString(detailHutang['tanggal_jatuh_tempo']);
+          tanggalTransaksi.value =
+              _ensureString(detailHutang['tanggal_transaksi']);
           kodeHutang.value = _ensureString(detailHutang['code']);
           tipeHutang.value = _ensureString(detailHutang['tipe_hutang']);
-          
-          
+
           totalHutang.value = detailHutang['jumlah'] ?? 0;
           totalCicilan.value = detailHutang['total_cicilan'] ?? 0;
           sisaHutang.value = detailHutang['sisa_hutang'] ?? 0;
-          
-          
-          if (data['daftar_cicilan'] != null && data['daftar_cicilan'] is List) {
+
+          if (data['daftar_cicilan'] != null &&
+              data['daftar_cicilan'] is List) {
             final List<dynamic> cicilanList = data['daftar_cicilan'];
             final List<Map<String, dynamic>> processedCicilan = [];
             for (var item in cicilanList) {
@@ -114,17 +111,18 @@ class HutangDetailController extends GetxController {
               };
               processedCicilan.add(cicilanItem);
             }
-            
+
             daftarCicilan.assignAll(processedCicilan);
           } else {
             daftarCicilan.clear();
           }
-          
         } else {
-          throw Exception(responseData['message'] ?? 'Gagal memuat data detail hutang');
+          throw Exception(
+              responseData['message'] ?? 'Gagal memuat data detail hutang');
         }
       } else {
-        throw Exception('Gagal memuat data detail hutang. Status code: ${response.statusCode}');
+        throw Exception(
+            'Gagal memuat data detail hutang. Status code: ${response.statusCode}');
       }
     } catch (e) {
       Get.snackbar(
@@ -145,7 +143,7 @@ class HutangDetailController extends GetxController {
     return value.toString();
   }
 
-  void navigateToTambahCicilan() {
+  void navigateToTambahCicilan() async {
     final hutangData = {
       'id': id.value,
       'code': kodeHutang.value,
@@ -154,8 +152,12 @@ class HutangDetailController extends GetxController {
       'sisa': sisaHutang.value.toString(),
     };
 
-    Get.toNamed(Routes.HUTANG_TAMBAH_CICILAN, arguments: hutangData)
-      ?.then((_) => fetchDetailHutang()); 
+    final result =
+        await Get.toNamed(Routes.HUTANG_TAMBAH_CICILAN, arguments: hutangData);
+
+    if (result == 'refresh') {
+      fetchDetailHutang();
+    }
   }
 
   String formatCurrency(int amount) {
@@ -168,8 +170,7 @@ class HutangDetailController extends GetxController {
 
   List<Map<String, dynamic>> getRiwayatTransaksi() {
     final List<Map<String, dynamic>> riwayat = [];
-    
-    
+
     riwayat.add({
       'id': id.value,
       'tanggal': tanggalTransaksi.value,
@@ -180,8 +181,7 @@ class HutangDetailController extends GetxController {
       'formatted_jumlah': formatCurrency(totalHutang.value),
       'keterangan': keterangan.value,
     });
-    
-    
+
     for (var cicilan in daftarCicilan) {
       riwayat.add({
         'id': cicilan['id'],
@@ -194,8 +194,7 @@ class HutangDetailController extends GetxController {
         'keterangan': cicilan['keterangan'],
       });
     }
-    
-    
+
     riwayat.sort((a, b) {
       DateTime? dateA, dateB;
       try {
@@ -211,7 +210,7 @@ class HutangDetailController extends GetxController {
       }
       return dateB.compareTo(dateA);
     });
-    
+
     return riwayat;
   }
 }

@@ -18,11 +18,17 @@ class LoginController extends GetxController {
 
   final StorageService _storageService = Get.find<StorageService>();
 
-  final count = 0.obs;
   @override
   void onInit() {
     super.onInit();
     formKey = GlobalKey<FormState>();
+  }
+
+  @override
+  void onClose() {
+    usernameController.dispose();
+    passwordController.dispose();
+    super.onClose();
   }
 
   void togglePasswordVisibility() {
@@ -31,16 +37,20 @@ class LoginController extends GetxController {
 
   String? validateUsername(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Username cannot be empty';
+      return 'Username tidak boleh kosong';
     }
     return null;
   }
 
   String? validatePassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Password cannot be empty';
+      return 'Password tidak boleh kosong';
     }
     return null;
+  }
+
+  List<String> getUsernameHistory() {
+    return _storageService.getUsernameHistory();
   }
 
   void login() async {
@@ -50,60 +60,94 @@ class LoginController extends GetxController {
 
         final response = await http.post(
           Uri.parse('${BaseUrl.baseUrl}/login'),
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
           body: {
-            'username': usernameController.text,
-            'password': passwordController.text,
+            'username': usernameController.text.trim(),
+            'password': passwordController.text.trim(),
           },
         );
-        final Map<String, dynamic> responseData = json.decode(response.body);
 
-        if (response.statusCode == 200 && responseData['status'] == 'success') {
-          await _storageService.saveToken(responseData['token']);
-          final user = User(
-            userId: responseData['user_id'],
-            username: responseData['username'],
-            name: responseData['name'],
-            category: responseData['category'],
-            replika: responseData['replika'],
-            referral: responseData['referral'],
-            subdomain: responseData['subdomain'],
-            link: responseData['link'],
-            numberId: responseData['number_id'],
-            birth: responseData['birth'],
-            sex: responseData['sex'],
-            address: responseData['address'],
-            city: responseData['city'],
-            phone: responseData['phone'],
-            email: responseData['email'],
-            bankName: responseData['bank_name'],
-            bankBranch: responseData['bank_branch'],
-            bankAccountNumber: responseData['bank_account_number'],
-            bankAccountName: responseData['bank_account_name'],
-            lastLogin: responseData['last_login'],
-            lastIpaddress: responseData['last_ipaddress'],
-            picture: responseData['picture'],
-            date: responseData['date'],
-            publish: responseData['publish'],
-          );
+        print('Response status: ${response.statusCode}');
+        print('Response body: ${response.body}');
 
-          await _storageService.saveUserData(user);
+        if (response.statusCode == 200) {
+          final Map<String, dynamic> responseData = json.decode(response.body);
 
-          _clearForm();
+          if (responseData['status'] == 'success') {
+            await _storageService.saveToken(responseData['token']);
+            final user = User.fromJson(responseData);
+            await _storageService.saveUserData(user);
+            await _storageService
+                .saveUsernameToHistory(usernameController.text.trim());
+            _clearForm();
+            Get.offAllNamed(Routes.HOME);
 
-          Get.offAllNamed(Routes.HOME);
-
-          Get.snackbar(
-            'Berhasil Login',
-            'Selamat datang, ${user.name}!',
-            snackPosition: SnackPosition.TOP,
-            backgroundColor: AppColors.success,
-            colorText: Colors.white,
-            duration: Duration(seconds: 3),
-          );
+            Get.snackbar(
+              'Berhasil Login',
+              'Selamat datang, ${user.name}!',
+              snackPosition: SnackPosition.TOP,
+              backgroundColor: AppColors.success,
+              colorText: Colors.white,
+              duration: Duration(seconds: 3),
+            );
+          } else {
+            String message = responseData['message'] ?? 'Login gagal';
+            String errorType = responseData['error_type'] ?? '';
+            String title = errorType == 'username_not_found' ? 'Username Tidak Ditemukan' : errorType == 'wrong_password' ? 'Password Salah' : 'Login Gagal';
+            
+            Get.snackbar(
+              title,
+              message,
+              snackPosition: SnackPosition.TOP,
+              backgroundColor: AppColors.danger,
+              colorText: Colors.white,
+              duration: Duration(seconds: 3),
+              margin: EdgeInsets.all(10),
+              borderRadius: 10,
+              icon: Icon(
+                errorType == 'username_not_found' ? Icons.person_off : Icons.lock,
+                color: Colors.white,
+              ),
+            );
+          }
+        } else if (response.statusCode == 401) {
+          try {
+            final Map<String, dynamic> errorData = json.decode(response.body);
+            String message = errorData['message'] ?? 'Login gagal';
+            String errorType = errorData['error_type'] ?? '';
+            String title = errorType == 'username_not_found' ? 'Username Tidak Ditemukan' : errorType == 'wrong_password' ? 'Password Salah' : 'Login Gagal';
+            
+            Get.snackbar(
+              title,
+              message,
+              snackPosition: SnackPosition.TOP,
+              backgroundColor: AppColors.danger,
+              colorText: Colors.white,
+              duration: Duration(seconds: 3),
+              margin: EdgeInsets.all(10),
+              borderRadius: 10,
+              icon: Icon(
+                errorType == 'username_not_found' ? Icons.person_off : Icons.lock,
+                color: Colors.white,
+              ),
+            );
+          } catch (e) {
+            Get.snackbar(
+              'Login Gagal',
+              'Username atau password salah',
+              snackPosition: SnackPosition.TOP,
+              backgroundColor: AppColors.danger,
+              colorText: Colors.white,
+              duration: Duration(seconds: 3),
+            );
+          }
         } else {
           Get.snackbar(
-            'Login gagal',
-            responseData['message'] ?? 'Username or password is incorrect',
+            'Error',
+            'Server error (${response.statusCode})',
             snackPosition: SnackPosition.TOP,
             backgroundColor: AppColors.danger,
             colorText: Colors.white,
@@ -111,11 +155,12 @@ class LoginController extends GetxController {
           );
         }
       } catch (e) {
+        print('Login error: $e');
         Get.snackbar(
           'Error',
-          'An error occurred',
+          'Terjadi kesalahan koneksi',
           snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.danger,
           colorText: Colors.white,
           duration: Duration(seconds: 3),
         );
@@ -124,6 +169,8 @@ class LoginController extends GetxController {
       }
     }
   }
+
+
 
   void _clearForm() {
     usernameController.clear();

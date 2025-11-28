@@ -1,3 +1,4 @@
+import 'package:emasjid_pro/app/helpers/input_currency_formatter.dart';
 import 'package:emasjid_pro/app/utils/app_colors.dart';
 import 'package:emasjid_pro/app/utils/app_responsive.dart';
 import 'package:emasjid_pro/app/utils/app_text.dart';
@@ -29,7 +30,7 @@ class PengeluaranTransaksiView extends GetView<PengeluaranTransaksiController> {
             Remix.arrow_left_s_line,
             color: AppColors.dark,
           ),
-          onPressed: () => Get.back(),
+          onPressed: () => Get.back(result: 'refresh'),
         ),
       ),
       body: Obx(() {
@@ -355,8 +356,7 @@ class PengeluaranTransaksiView extends GetView<PengeluaranTransaksiController> {
             controller: controller.amountController,
             keyboardType: TextInputType.number,
             inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              controller.currencyFormatter,
+             IndonesiaCurrencyFormatter()
             ],
             decoration: InputDecoration(
               hintText: '0',

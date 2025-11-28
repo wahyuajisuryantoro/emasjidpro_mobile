@@ -489,7 +489,7 @@ class HutangDaftarController extends GetxController {
     } catch (e) {
       Get.snackbar(
         'Error',
-        'Gagal memuat data hutang: $e',
+        'Gagal memuat data hutang',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -497,6 +497,10 @@ class HutangDaftarController extends GetxController {
     } finally {
       isLoading(false);
     }
+  }
+
+  Future<void> refreshData() async {
+    await fetchDaftarHutang();
   }
 
   @override

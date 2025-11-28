@@ -112,8 +112,6 @@ class ProfileUbahPasswordController extends GetxController {
     
     try {
       isLoading.value = true;
-      
-      // Get token from storage
       String? token = _storageService.getToken();
       
       if (token == null) {
@@ -126,8 +124,6 @@ class ProfileUbahPasswordController extends GetxController {
         );
         return;
       }
-      
-      // Prepare request data
       Map<String, dynamic> requestData = {
         'current_password': currentPasswordController.text,
         'new_password': newPasswordController.text,
@@ -142,22 +138,29 @@ class ProfileUbahPasswordController extends GetxController {
           'Accept': 'application/json',
         },
         body: json.encode(requestData),
+      ).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          throw Exception('Request timeout');
+        },
       );
-      
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         
         if (data['success'] == true) {
+          // Clear form
+          _clearForm();
+          
+          // Show success message
           Get.snackbar(
             'Berhasil',
             data['message'] ?? 'Password berhasil diperbarui',
-            snackPosition: SnackPosition.BOTTOM,
+            snackPosition: SnackPosition.TOP,
             backgroundColor: AppColors.success,
             colorText: Colors.white,
             duration: const Duration(seconds: 3),
           );
-          
-          // Clear storage and auto logout
+          await Future.delayed(const Duration(seconds: 1));
           await _autoLogout();
           
         } else {
@@ -184,7 +187,7 @@ class ProfileUbahPasswordController extends GetxController {
         Get.snackbar(
           'Gagal',
           errorMessage,
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: AppColors.danger,
           colorText: Colors.white,
         );
@@ -193,21 +196,26 @@ class ProfileUbahPasswordController extends GetxController {
         Get.snackbar(
           'Error',
           'Session expired, silakan login ulang',
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: AppColors.danger,
           colorText: Colors.white,
         );
         await _autoLogout();
       } else {
-        final data = json.decode(response.body);
-        throw Exception(data['message'] ?? 'Server error: ${response.statusCode}');
+        // Server error
+        try {
+          final data = json.decode(response.body);
+          throw Exception(data['message'] ?? 'Server error: ${response.statusCode}');
+        } catch (e) {
+          throw Exception('Server error: ${response.statusCode}');
+        }
       }
     } catch (e) {
-      print(e);
+      print('Error updating password: $e');
       Get.snackbar(
         'Error',
-        'Gagal memperbarui password',
-        snackPosition: SnackPosition.BOTTOM,
+        'Terjadi Kesalahan Server',
+        snackPosition: SnackPosition.TOP,
         backgroundColor: AppColors.danger,
         colorText: Colors.white,
       );
@@ -216,13 +224,19 @@ class ProfileUbahPasswordController extends GetxController {
     }
   }
   
+  // Clear form
+  void _clearForm() {
+    currentPasswordController.clear();
+    newPasswordController.clear();
+    confirmPasswordController.clear();
+  }
+  
   // Auto logout after password change
   Future<void> _autoLogout() async {
     try {
       await _storageService.clearStorage();
       await Future.delayed(const Duration(seconds: 2));
-      Get.offAllNamed(Routes.LOGIN);
-      
+      Get.offAllNamed(Routes.LOGIN); 
     } catch (e) {
       Get.offAllNamed(Routes.LOGIN);
     }

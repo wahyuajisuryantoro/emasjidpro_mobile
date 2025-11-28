@@ -361,7 +361,6 @@ class KasDanBankTransferView extends GetView<KasDanBankTransferController> {
             keyboardType: TextInputType.number,
             inputFormatters: [
               FilteringTextInputFormatter.digitsOnly,
-              controller.currencyFormatter,
             ],
             decoration: InputDecoration(
               hintText: '0',

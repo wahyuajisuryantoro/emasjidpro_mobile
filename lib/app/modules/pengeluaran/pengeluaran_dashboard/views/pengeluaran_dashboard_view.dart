@@ -32,15 +32,6 @@ class PengeluaranDashboardView extends GetView<PengeluaranDashboardController> {
           ),
           onPressed: () => Get.back(),
         ),
-        actions: [
-          IconButton(
-            icon: Icon(
-              Remix.refresh_line,
-              color: AppColors.dark,
-            ),
-            onPressed: () => controller.refreshData(),
-          ),
-        ],
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
@@ -48,27 +39,34 @@ class PengeluaranDashboardView extends GetView<PengeluaranDashboardController> {
               child: CircularProgressIndicator(color: AppColors.danger));
         }
 
-        return SingleChildScrollView(
-          padding: AppResponsive.padding(horizontal: 5, vertical: 3),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildPeriodSummaryCards(),
-              SizedBox(height: AppResponsive.h(4)),
-              _buildActivityMenu(),
-              SizedBox(height: AppResponsive.h(4)),
-              _buildExpenseCategoriesSummary(),
-              SizedBox(height: AppResponsive.h(4)),
-              _buildTransactionHistory(),
-              SizedBox(height: AppResponsive.h(4)),
-            ],
+        return RefreshIndicator(
+          onRefresh: () async {
+            await controller.fetchDashboardData();
+          },
+          color: AppColors.danger,
+          child: SingleChildScrollView(
+            physics: AlwaysScrollableScrollPhysics(),
+            padding: AppResponsive.padding(horizontal: 5, vertical: 3),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildPeriodSummaryCards(),
+                SizedBox(height: AppResponsive.h(4)),
+                _buildActivityMenu(),
+                SizedBox(height: AppResponsive.h(4)),
+                _buildExpenseCategoriesSummary(),
+                SizedBox(height: AppResponsive.h(4)),
+                _buildTransactionHistory(),
+                SizedBox(height: AppResponsive.h(4)),
+              ],
+            ),
           ),
         );
       }),
     );
   }
 
-   Widget _buildPeriodSummaryCards() {
+  Widget _buildPeriodSummaryCards() {
     return Row(
       children: [
         Expanded(
@@ -93,8 +91,7 @@ class PengeluaranDashboardView extends GetView<PengeluaranDashboardController> {
                     ),
                     Text(
                       'Tahunan',
-                      style: AppText.pSmall(
-                          color: AppColors.white),
+                      style: AppText.pSmall(color: AppColors.white),
                     ),
                   ],
                 ),
@@ -113,7 +110,6 @@ class PengeluaranDashboardView extends GetView<PengeluaranDashboardController> {
             decoration: BoxDecoration(
               color: AppColors.info,
               borderRadius: BorderRadius.circular(15),
-              
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -122,7 +118,6 @@ class PengeluaranDashboardView extends GetView<PengeluaranDashboardController> {
                   children: [
                     Container(
                       padding: AppResponsive.padding(all: 1),
-                     
                       child: Icon(
                         Remix.calendar_check_line,
                         color: AppColors.white,
@@ -131,8 +126,7 @@ class PengeluaranDashboardView extends GetView<PengeluaranDashboardController> {
                     ),
                     Text(
                       'Bulanan',
-                      style: AppText.pSmall(
-                          color: AppColors.white),
+                      style: AppText.pSmall(color: AppColors.white),
                     ),
                   ],
                 ),
@@ -153,19 +147,23 @@ class PengeluaranDashboardView extends GetView<PengeluaranDashboardController> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         _buildActivityCard(
-          icon: Remix.add_circle_fill,
-          title: "Transaksi",
-          onTap: () {
-            Get.toNamed(Routes.PENGELUARAN_TRANSAKSI);
-          },
-        ),
+            icon: Remix.add_circle_fill,
+            title: "Transaksi",
+            onTap: () async {
+              final result = await Get.toNamed(Routes.PENGELUARAN_TRANSAKSI);
+              if (result == 'refresh') {
+                controller.refreshData();
+              }
+            }),
         _buildActivityCard(
-          icon: Remix.history_fill,
-          title: "Riwayat",
-          onTap: () {
-            Get.toNamed(Routes.PENGELUARAN_RIWAYAT);
-          },
-        ),
+            icon: Remix.history_fill,
+            title: "Riwayat",
+            onTap: () async {
+              final result = await Get.toNamed(Routes.PENGELUARAN_RIWAYAT);
+              if (result == 'refresh') {
+                controller.refreshData();
+              }
+            }),
         _buildActivityCard(
           icon: Remix.file_chart_line,
           title: "Laporan",
@@ -408,7 +406,7 @@ class PengeluaranDashboardView extends GetView<PengeluaranDashboardController> {
   }) {
     return Row(
       children: [
-                SizedBox(width: AppResponsive.w(3)),
+        SizedBox(width: AppResponsive.w(3)),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -424,7 +422,6 @@ class PengeluaranDashboardView extends GetView<PengeluaranDashboardController> {
                     ),
                   ),
                   SizedBox(width: 8),
-                 
                 ],
               ),
               SizedBox(height: AppResponsive.h(2)),

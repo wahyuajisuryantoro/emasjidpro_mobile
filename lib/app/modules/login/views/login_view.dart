@@ -39,7 +39,7 @@ class LoginView extends GetView<LoginController> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text(
-                        'Asslamualaikum',
+                        'Assalamualaikum',
                         style: AppText.h3(color: AppColors.dark),
                         textAlign: TextAlign.center,
                       ),
@@ -68,24 +68,6 @@ class LoginView extends GetView<LoginController> {
                       SizedBox(height: AppResponsive.h(3)),
                       _buildLoginButton(),
                       SizedBox(height: AppResponsive.h(4)),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Belum mempunyai akun?',
-                            style: AppText.p(
-                                color: AppColors.dark.withOpacity(0.7)),
-                          ),
-                          TextButton(
-                            onPressed: controller.goToRegister,
-                            child: Text(
-                              'Sign Up',
-                              style:
-                                  AppText.pSmallBold(color: AppColors.primary),
-                            ),
-                          ),
-                        ],
-                      ),
                     ],
                   ),
                 ),
@@ -98,32 +80,63 @@ class LoginView extends GetView<LoginController> {
   }
 
   Widget _buildUsernameField() {
-    return TextFormField(
-      controller: controller.usernameController,
-      validator: controller.validateUsername,
-      decoration: InputDecoration(
-        labelText: 'Username',
-        hintText: 'Masukkan Username',
-        prefixIcon: const Icon(Icons.person_outline, color: AppColors.primary),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.grey),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.grey),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.danger),
-        ),
-        contentPadding: AppResponsive.padding(horizontal: 4, vertical: 2),
-      ),
-      style: AppText.p(color: AppColors.dark),
+    final history = controller.getUsernameHistory();
+
+    return Autocomplete<String>(
+      optionsBuilder: (TextEditingValue textEditingValue) {
+        if (textEditingValue.text.isEmpty) {
+          return history.take(5);
+        }
+        return history.where((String option) {
+          return option
+              .toLowerCase()
+              .contains(textEditingValue.text.toLowerCase());
+        }).take(5);
+      },
+      onSelected: (String selection) {
+        controller.usernameController.text = selection;
+      },
+      fieldViewBuilder:
+          (context, textEditingController, focusNode, onFieldSubmitted) {
+        // Sync sekali saja, tanpa listener
+        if (textEditingController.text != controller.usernameController.text) {
+          textEditingController.text = controller.usernameController.text;
+        }
+
+        return TextFormField(
+          controller:
+              controller.usernameController, // Langsung pakai controller asli
+          focusNode: focusNode,
+          validator: controller.validateUsername,
+          decoration: InputDecoration(
+            labelText: 'Username',
+            hintText: 'Masukkan Username',
+            prefixIcon:
+                const Icon(Icons.person_outline, color: AppColors.primary),
+            suffixIcon: history.isNotEmpty
+                ? Icon(Icons.history, color: Colors.grey[400], size: 20)
+                : null,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.grey),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.grey),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.primary, width: 2),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.danger),
+            ),
+            contentPadding: AppResponsive.padding(horizontal: 4, vertical: 2),
+          ),
+          style: AppText.p(color: AppColors.dark),
+        );
+      },
     );
   }
 

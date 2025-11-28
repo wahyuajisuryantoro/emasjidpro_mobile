@@ -1,16 +1,14 @@
-// PiutangTambahController.dart
 import 'dart:convert';
 import 'dart:io';
 import 'package:emasjid_pro/app/constant/base_url.dart';
 import 'package:emasjid_pro/app/modules/home/controllers/home_controller.dart';
+import 'package:emasjid_pro/app/routes/app_pages.dart';
 import 'package:emasjid_pro/app/services/storage_services.dart';
 import 'package:emasjid_pro/app/utils/app_text.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:emasjid_pro/app/helpers/currency_formatter.dart';
 import 'package:emasjid_pro/app/utils/app_colors.dart';
 import 'package:emasjid_pro/app/utils/app_responsive.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -18,6 +16,7 @@ import 'package:http/http.dart' as http;
 
 class PiutangTambahController extends GetxController {
   final StorageService storage = Get.find<StorageService>();
+  final ScrollController scrollController = ScrollController();
 
   // Form controllers
   final nameController = TextEditingController();
@@ -49,12 +48,35 @@ class PiutangTambahController extends GetxController {
   final attachmentSize = ''.obs;
   Rx<File?> attachmentFile = Rx<File?>(null);
 
-  // Currency formatter
-  final currencyFormatter = CurrencyInputFormatter();
-
   // Initialize AppResponsive
   void initResponsive(BuildContext context) {
     AppResponsive().init(context);
+  }
+
+  void resetFormAndScrollToTop() {
+    nameController.clear();
+    descriptionController.clear();
+    amountController.clear();
+    selectedDate.value = DateTime.now();
+    selectedDueDate.value = DateTime.now().add(const Duration(days: 30));
+    formattedSelectedDate.value =
+        DateFormat('EEEE, d MMMM yyyy', 'id_ID').format(DateTime.now());
+    formattedSelectedDueDate.value = DateFormat('EEEE, d MMMM yyyy', 'id_ID')
+        .format(DateTime.now().add(const Duration(days: 30)));
+    if (sourceAccounts.isNotEmpty) {
+      selectedSourceAccount.value = sourceAccounts[0];
+    }
+    if (relatedAccounts.isNotEmpty) {
+      selectedRelatedAccount.value = relatedAccounts[0];
+    }
+    removeAttachment();
+    if (scrollController.hasClients) {
+      scrollController.animateTo(
+        0.0,
+        duration: Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   // Fetch accounts data
@@ -479,20 +501,12 @@ class PiutangTambahController extends GetxController {
       if (token == null) {
         throw Exception('No authentication token');
       }
-
-      // Persiapkan data untuk dikirim ke API
       final Uri url = Uri.parse('${BaseUrl.baseUrl}/tambah-piutang');
-
-      // Membuat request multipart
       var request = http.MultipartRequest('POST', url);
-
-      // Tambahkan headers
       request.headers.addAll({
         'Authorization': 'Bearer $token',
         'Accept': 'application/json',
       });
-
-      // Tambahkan fields
       request.fields['name'] = nameController.text;
       request.fields['description'] = descriptionController.text;
       request.fields['amount'] = amount.toString();
@@ -525,8 +539,8 @@ class PiutangTambahController extends GetxController {
           if (Get.isRegistered<HomeController>()) {
             Get.find<HomeController>().refreshNotificationCount();
           }
-          Future.delayed(const Duration(seconds: 1), () {
-            Get.back(result: true);
+          Future.delayed(const Duration(milliseconds: 800), () {
+            Get.offAndToNamed(Routes.PIUTANG_DAFTAR, result: 'refresh');
           });
         } else {
           throw Exception(responseData['message'] ?? 'Gagal menyimpan piutang');

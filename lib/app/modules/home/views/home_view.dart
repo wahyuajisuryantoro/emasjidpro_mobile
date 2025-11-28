@@ -26,21 +26,25 @@ class HomeView extends GetView<HomeController> {
             // Profile Avatar with NetworkImage
             Obx(() {
               if (controller.picture.value.isNotEmpty) {
-                return CircleAvatar(
-                  radius: 20,
-                  backgroundColor: AppColors.primary.withOpacity(0.2),
-                  backgroundImage: NetworkImage(controller.picture.value),
-                  onBackgroundImageError: (exception, stackTrace) {
-                    // Handle image loading error
-                    print('Error loading profile image: $exception');
+                return InkWell(
+                  onTap: (){
+                    Get.toNamed(Routes.PROFIL);
                   },
-                  child: controller.picture.value.isEmpty
-                      ? Icon(
-                          Remix.user_3_fill,
-                          color: AppColors.primary,
-                          size: 20,
-                        )
-                      : null,
+                  child: CircleAvatar(
+                    radius: 20,
+                    backgroundColor: AppColors.primary.withOpacity(0.2),
+                    backgroundImage: NetworkImage(controller.picture.value),
+                    onBackgroundImageError: (exception, stackTrace) {
+                      print('$exception');
+                    },
+                    child: controller.picture.value.isEmpty
+                        ? Icon(
+                            Remix.user_3_fill,
+                            color: AppColors.primary,
+                            size: 20,
+                          )
+                        : null,
+                  ),
                 );
               } else {
                 return CircleAvatar(
@@ -126,28 +130,36 @@ class HomeView extends GetView<HomeController> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: AppResponsive.padding(horizontal: 5, vertical: 4),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildTabCard(),
-            SizedBox(height: AppResponsive.h(4)),
-            Text(
-              'Menu Utama',
-              style: AppText.h5(color: AppColors.dark),
-            ),
-            SizedBox(height: AppResponsive.h(3)),
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 4,
-              childAspectRatio: 0.9,
-              crossAxisSpacing: AppResponsive.w(2),
-              mainAxisSpacing: AppResponsive.h(2),
-              children: _buildMenuItems(),
-            ),
-          ],
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await controller.getHomeData();
+          await controller.fetchMasjidData();
+          await controller.fetchUnreadNotificationCount();
+        },
+        child: SingleChildScrollView(
+          physics: AlwaysScrollableScrollPhysics(),
+          padding: AppResponsive.padding(horizontal: 5, vertical: 4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildTabCard(),
+              SizedBox(height: AppResponsive.h(4)),
+              Text(
+                'Menu Utama',
+                style: AppText.h5(color: AppColors.dark),
+              ),
+              SizedBox(height: AppResponsive.h(3)),
+              GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 4,
+                childAspectRatio: 0.9,
+                crossAxisSpacing: AppResponsive.w(2),
+                mainAxisSpacing: AppResponsive.h(2),
+                children: _buildMenuItems(),
+              ),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: CustomBottomNavigationBar(),
@@ -227,11 +239,12 @@ class HomeView extends GetView<HomeController> {
                   children: [
                     _buildTabButton('Pendapatan', 0),
                     _buildTabButton('Pengeluaran', 1),
-                    _buildTabButton('Saldo', 2),
                   ],
                 ),
               )),
-          Obx(() => _buildTabContent()),
+          Obx(() => controller.isLoadingHomeData.value
+              ? _buildLoadingContent()
+              : _buildTabContent()),
         ],
       ),
     );
@@ -261,14 +274,24 @@ class HomeView extends GetView<HomeController> {
     );
   }
 
+  Widget _buildLoadingContent() {
+    return Padding(
+      padding: AppResponsive.padding(all: 4),
+      child: Center(
+        child: CircularProgressIndicator(
+          color: Colors.white,
+          strokeWidth: 2,
+        ),
+      ),
+    );
+  }
+
   Widget _buildTabContent() {
     switch (controller.selectedTabIndex.value) {
       case 0:
         return _buildPendapatanTab();
       case 1:
         return _buildPengeluaranTab();
-      case 2:
-        return _buildSaldoTab();
       default:
         return _buildPendapatanTab();
     }
@@ -285,18 +308,15 @@ class HomeView extends GetView<HomeController> {
             style: AppText.pSmall(color: Colors.white.withOpacity(0.8)),
           ),
           SizedBox(height: AppResponsive.h(1)),
-          Text(
-            controller.pendapatan.value,
-            style: AppText.h2(color: Colors.white),
-          ),
+          Obx(() => Text(
+                controller.pendapatanBulanIni.value,
+                style: AppText.h2(color: Colors.white),
+              )),
           SizedBox(height: AppResponsive.h(2)),
-          _buildInfoRow('Bulan Lalu', 'Rp 20.750.000'),
+          Obx(() => _buildInfoRow('Bulan Lalu', controller.pendapatanBulanLalu.value)),
           SizedBox(height: AppResponsive.h(1)),
-          _buildInfoRow('Bulan Ini', 'Rp 25.750.000'),
+          Obx(() => _buildInfoRow('Bulan Ini', controller.pendapatanBulanIni.value)),
           SizedBox(height: AppResponsive.h(1)),
-          _buildInfoRow('Peningkatan', '24%', suffixIcon: Remix.arrow_up_fill),
-          SizedBox(height: AppResponsive.h(3)),
-          _buildViewDetailButton('Lihat Detail Pendapatan'),
         ],
       ),
     );
@@ -304,7 +324,7 @@ class HomeView extends GetView<HomeController> {
 
   Widget _buildPengeluaranTab() {
     return Padding(
-      padding: AppResponsive.padding(all: 5),
+      padding: AppResponsive.padding(all: 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -313,52 +333,15 @@ class HomeView extends GetView<HomeController> {
             style: AppText.pSmall(color: Colors.white.withOpacity(0.8)),
           ),
           SizedBox(height: AppResponsive.h(1)),
-          Text(
-            controller.pengeluaran.value,
-            style: AppText.h2(color: Colors.white),
-          ),
+          Obx(() => Text(
+                controller.pengeluaranBulanIni.value,
+                style: AppText.h2(color: Colors.white),
+              )),
           SizedBox(height: AppResponsive.h(2)),
-          _buildInfoRow('Bulan Lalu', 'Rp 10.500.000'),
+          Obx(() => _buildInfoRow('Bulan Lalu', controller.pengeluaranBulanLalu.value)),
           SizedBox(height: AppResponsive.h(1)),
-          _buildInfoRow('Bulan Ini', 'Rp 12.345.000'),
+          Obx(() => _buildInfoRow('Bulan Ini', controller.pengeluaranBulanIni.value)),
           SizedBox(height: AppResponsive.h(1)),
-          _buildInfoRow('Peningkatan', '17%', suffixIcon: Remix.arrow_up_fill),
-          SizedBox(height: AppResponsive.h(3)),
-          _buildViewDetailButton('Lihat Detail Pengeluaran'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSaldoTab() {
-    return Padding(
-      padding: AppResponsive.padding(all: 5),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Saldo Kas',
-            style: AppText.pSmall(color: Colors.white.withOpacity(0.8)),
-          ),
-          SizedBox(height: AppResponsive.h(1)),
-          Text(
-            controller.saldo.value,
-            style: AppText.h2(color: Colors.white),
-          ),
-          SizedBox(height: AppResponsive.h(2)),
-          _buildInfoRow('Pendapatan', controller.pendapatan.value,
-              prefixIcon: Remix.funds_box_fill),
-          SizedBox(height: AppResponsive.h(1)),
-          _buildInfoRow('Pengeluaran', controller.pengeluaran.value,
-              prefixIcon: Remix.hand_coin_fill),
-          SizedBox(height: AppResponsive.h(1)),
-          Divider(
-              color: Colors.white.withOpacity(0.2), height: AppResponsive.h(2)),
-          SizedBox(height: AppResponsive.h(1)),
-          _buildInfoRow('Periode', controller.periode.value,
-              prefixIcon: Remix.calendar_check_fill),
-          SizedBox(height: AppResponsive.h(3)),
-          _buildViewDetailButton('Lihat Detail Kas'),
         ],
       ),
     );
@@ -402,32 +385,6 @@ class HomeView extends GetView<HomeController> {
           ],
         ),
       ],
-    );
-  }
-
-  Widget _buildViewDetailButton(String label) {
-    return Container(
-      width: double.infinity,
-      padding: AppResponsive.padding(vertical: 1.5),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Remix.file_list_3_line,
-            color: Colors.white,
-            size: 16,
-          ),
-          SizedBox(width: AppResponsive.w(1)),
-          Text(
-            label,
-            style: AppText.pSmall(color: Colors.white),
-          ),
-        ],
-      ),
     );
   }
 
